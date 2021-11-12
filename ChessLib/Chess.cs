@@ -19,9 +19,9 @@ namespace ChessLib
 
         public void Restart(string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") 
             => Board = new Board(fen);
-        public void Move(ChessPosition from, ChessPosition to, EnumFigure figure=EnumFigure.None)
+        public virtual void Move(ChessPosition from, ChessPosition to, EnumFigure figure=EnumFigure.None)
             => Board.Move(from, to, figure);
-        public void Move(ChessMove chessMove)
+        public virtual void Move(ChessMove chessMove)
             => Board.Move(chessMove);
 
         #region Ctor
