@@ -3,9 +3,8 @@ using System.Collections.Generic;
 
 namespace ChessSFML
 {
-    internal sealed class ChessUI : Chess
+    internal sealed class ChessUI : LocalChessEngine, IChessWithSelect
     {
-        public SkinProvider SkinProvider { get; set; }
         private ChessPosition? _selected = null;
         public ChessPosition? Selected 
         { 
@@ -16,7 +15,7 @@ namespace ChessSFML
                 {
                     if (Board.Figures[Selected.Value.X, Selected.Value.Y] is not null && Board.Figures[Selected.Value.X, Selected.Value.Y].Color == Turn)
                     {
-                        Moves = Board.Figures[Selected.Value.X, Selected.Value.Y].GetMovePositionsWithCheckCheck(Board);
+                        MovesForSelected = GetMoves(Selected.Value);
                     }
                     else
                     {
@@ -25,14 +24,13 @@ namespace ChessSFML
                 }
                 else
                 {
-                    Moves = new List<ChessPosition>();
+                    MovesForSelected = new List<ChessPosition>();
                 }
             } 
         }
-        public List<ChessPosition> Moves { get; private set; } = new List<ChessPosition>();
-        public ChessUI(SkinProvider skinProvider, string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") : base(fen)
+        public IEnumerable<ChessPosition> MovesForSelected { get; private set; } = new List<ChessPosition>();
+        public ChessUI(string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") : base(fen)
         {
-            SkinProvider = skinProvider;
         }
     }
 }

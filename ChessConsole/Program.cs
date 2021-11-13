@@ -9,16 +9,16 @@ namespace ChessConsole
     {
         static void Main(string[] args)
         {
-            Chess chess = new Chess();
+            IChessEngine chess = new LocalChessEngine();
             while (chess.InGame)
             {
-                Console.WriteLine(chess.Board.Fen);
-                Console.WriteLine(string.Join(" ", chess.Board.Figures.Cast<ChessFigure>().Where(f => f?.Color == chess.Board.Turn).SelectMany(x => x.GetMovePositionsWithCheckCheck(chess.Board).Select(y => $"{x.Position}{y}"))));
+                Console.WriteLine(chess.Fen);
+                Console.WriteLine(string.Join(" ", chess.Figures.Where(f => f?.Color == chess.Turn).SelectMany(x => chess.GetMoves(x.Position).Select(y => $"{x.Position}{y}"))));
                 for (int y = 7; y >= 0; y--)
                 {
                     for (int x = 0; x < 8; x++)
                     {
-                        Console.Write(chess.Board.Figures[x, y]?.Char ?? '.');
+                        Console.Write(chess.GetFigure(x, y)?.Char ?? '.');
                     }
                     Console.WriteLine();
                 }

@@ -14,7 +14,8 @@ namespace ChessSFML
         private static readonly RenderTexture _chessBoardTexture;
         private static readonly CircleShape _canMuveTo;
         private static readonly Sprite _chessBoardSprite;
-        private static ChessUI _chess;
+        private static SkinProvider _skinProvider;
+        private static IChessWithSelect _chess;
         static Program()
         {
             _window = new RenderWindow(new VideoMode(800, 800), "Chess by MrExpen", Styles.Close | Styles.Titlebar);
@@ -57,7 +58,8 @@ namespace ChessSFML
             _chessBoardTexture.Display();
             _chessBoardSprite = new Sprite(_chessBoardTexture.Texture);
 
-            _chess = new ChessUI(new SkinProvider(@".\Resouces\ChessPiecesArray.png"));
+            _skinProvider = new SkinProvider(@".\Resouces\ChessPiecesArray.png");
+            _chess = new ChessUI();
         }
 
         static void Main(string[] args)
@@ -70,16 +72,12 @@ namespace ChessSFML
 
                 _window.Clear(SFML.Graphics.Color.White);
                 _window.Draw(_chessBoardSprite);
-                foreach (var Figure in _chess.Board.Figures)
+                foreach (var Figure in _chess.Figures)
                 {
-                    if (Figure is null)
-                    {
-                        continue;
-                    }
-                    _chess.SkinProvider.Sprites[(Figure.EnumFigure, Figure.Color)].Position = new Vector2f(_CELL_LENGTH * Figure.Position.X + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * Figure.Position.Y + _CELL_LENGTH / 2);
-                    _window.Draw(_chess.SkinProvider.Sprites[(Figure.EnumFigure, Figure.Color)]);
+                    _skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)].Position = new Vector2f(_CELL_LENGTH * Figure.Position.X + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * Figure.Position.Y + _CELL_LENGTH / 2);
+                    _window.Draw(_skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)]);
                 }
-                foreach (var position in _chess.Moves)
+                foreach (var position in _chess.MovesForSelected)
                 {
                     _canMuveTo.Position = new Vector2f(position.X * _CELL_LENGTH + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * position.Y + _CELL_LENGTH / 2);
                     _window.Draw(_canMuveTo);
@@ -105,7 +103,11 @@ namespace ChessSFML
                     try
                     {
                         var pos = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
-                        if (_chess.Board.Figures[pos.X, pos.Y] is not null && _chess.Board.Figures[pos.X, pos.Y].Color == _chess.Turn)
+                        if (_chess.Selected.Value ==  pos)
+                        {
+                            _chess.Selected = null;
+                        }
+                        else if (_chess.GetFigure(pos) is not null && _chess.GetFigure(pos).Color == _chess.Turn)
                         {
                             _chess.Selected = pos;
                         }
@@ -114,7 +116,6 @@ namespace ChessSFML
                             _chess.Move(_chess.Selected.Value, pos);
                             _chess.Selected = null;
                         }
-
                     }
                     catch (ArgumentException) { _chess.Selected = null; }
                 }
