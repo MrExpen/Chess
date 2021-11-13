@@ -100,24 +100,20 @@ namespace ChessSFML
                 }
                 else
                 {
-                    try
+                    var pos = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
+                    if (_chess.Selected.Value == pos)
                     {
-                        var pos = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
-                        if (_chess.Selected.Value ==  pos)
-                        {
-                            _chess.Selected = null;
-                        }
-                        else if (_chess.GetFigure(pos) is not null && _chess.GetFigure(pos).Color == _chess.Turn)
-                        {
-                            _chess.Selected = pos;
-                        }
-                        else
-                        {
-                            _chess.Move(_chess.Selected.Value, pos);
-                            _chess.Selected = null;
-                        }
+                        _chess.Selected = null;
                     }
-                    catch (ArgumentException) { _chess.Selected = null; }
+                    else if (_chess.GetFigure(pos) is not null && _chess.GetFigure(pos).Color == _chess.Turn)
+                    {
+                        _chess.Selected = pos;
+                    }
+                    else
+                    {
+                        _chess.Move(_chess.Selected.Value, pos);
+                        _chess.Selected = null;
+                    }
                 }
             }
         }

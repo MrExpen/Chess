@@ -30,7 +30,7 @@ namespace ChessLib.Figures
             foreach (ChessPosition movePosition in move)
             {
                 Board NewBoard = new Board(board, new ChessMove(this, FigureCreater.CreateFigure(EnumFigure, Color, movePosition)));
-                if (!NewBoard.Check(board.Turn))
+                if (!NewBoard.IsChecked(board.Turn))
                 {
                     chessPositions.Add(movePosition);
                 }

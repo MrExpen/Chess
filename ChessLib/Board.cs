@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ChessLib.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace ChessLib
@@ -10,7 +11,7 @@ namespace ChessLib
     public class Board
     {
         public ChessFigure[,] Figures { get; private set; } = new ChessFigure[8, 8];
-        public bool Check(Color color)
+        public bool IsChecked(Color color)
         {
             switch (color)
             {
@@ -45,23 +46,7 @@ namespace ChessLib
             }
         }
         public Color Turn { get; private set; }
-        public List<string> Moves { get; private set; } = new List<string>();
-        protected bool IsStalemate => !Check(Turn) && Figures.Cast<ChessFigure>().Where(f => f?.Color == Turn).All(f => f.GetMovePositionsWithCheckCheck(this).Count == 0);
-        protected bool IsTie1 => HalfmoveClock == 100;
-        protected bool IsTie2 => Moves.GroupBy(m => Regex.Match(m, @"\S+\s\S+").Value).Select(x => x.Count()).Any(x => x >= 3);
-        public bool IsTie => IsStalemate || IsTie1 || IsTie2;
-        public Color Winner
-        {
-            get
-            {
-                if (Check(Turn) && Figures.Cast<ChessFigure>().Where(f => f?.Color == Turn).All(f => f.GetMovePositionsWithCheckCheck(this).Count == 0))
-                {
-                    return Turn.Flip();
-                }
-                return Color.None;
-            }
-        }
-        public int HalfmoveClock { get; private set; } = 0;
+        public int HalfmoveClock { get; set; } = 0;
         public int FullmoveNumber { get;private set; } = 0;
         public string Fen { get; private set; }
 
@@ -70,19 +55,27 @@ namespace ChessLib
         public bool BlackLongCastling { get; set; } = false;
         public bool BlackShortCastling { get; set; } = false;
 
-        public void Move(ChessPosition from, ChessPosition to, EnumFigure figure=EnumFigure.None)
+        public bool Move(ChessPosition from, ChessPosition to, EnumFigure figure=EnumFigure.None)
         {
             if (Figures[from.X, from.Y] is null)
             {
-                throw new ArgumentException();
+                return false;
             }
-            Move(Figures[from.X, from.Y].Move(to, this));
+            try
+            {
+                return Move(Figures[from.X, from.Y].Move(to, this));
+            }
+            catch (CannotMoveException)
+            {
+                return false;
+            }
+            
         }
-        public void Move(ChessMove chessMove)
+        public bool Move(ChessMove chessMove)
         {
             if (chessMove.From.Color != Turn)
             {
-                throw new ArgumentException();
+                return false;
             }
             Figures[chessMove.From.Position.X, chessMove.From.Position.Y] = null;
             Figures[chessMove.To.Position.X, chessMove.To.Position.Y] = chessMove.To;
@@ -169,7 +162,12 @@ namespace ChessLib
                 HalfmoveClock = 0;
             }
 
+            Fen = GenerateFen(chessMove);
+            return true;
+        }
 
+        protected string GenerateFen(ChessMove lastMove)
+        {
             StringBuilder stringBuilder = new StringBuilder();
             for (int y = 7; y >= 0; y--)
             {
@@ -228,9 +226,9 @@ namespace ChessLib
 
             stringBuilder.Append(' ');
 
-            if (chessMove.From.EnumFigure == EnumFigure.Pawn && Math.Abs(chessMove.From.Position.Y - chessMove.To.Position.Y) == 2)
+            if (lastMove.From.EnumFigure == EnumFigure.Pawn && Math.Abs(lastMove.From.Position.Y - lastMove.To.Position.Y) == 2)
             {
-                stringBuilder.Append(new ChessPosition(chessMove.From.Position.X, chessMove.From.Position.Y + (chessMove.From.Color == Color.White ? +1 : -1)).ToString());
+                stringBuilder.Append(new ChessPosition(lastMove.From.Position.X, lastMove.From.Position.Y + (lastMove.From.Color == Color.White ? +1 : -1)).ToString());
             }
             else
             {
@@ -239,14 +237,12 @@ namespace ChessLib
 
             stringBuilder.Append($" {HalfmoveClock} {FullmoveNumber}");
 
-            Fen = stringBuilder.ToString();
-            Moves.Add(Fen);
+            return stringBuilder.ToString();
         }
 
         #region Ctor
         public Board(string fen= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         {
-            Moves.Add(fen);
             Fen = fen;
             int y = 7;
             int x = 0;
@@ -300,7 +296,6 @@ namespace ChessLib
             if (tmp[3][0] != '-')
             {
                 var to = new ChessPosition(tmp[3]);
-                Moves.Add(Fen);
             }
 
             HalfmoveClock = int.Parse(tmp[4]);
@@ -317,7 +312,6 @@ namespace ChessLib
                 Figures[figure.Position.X, figure.Position.Y] = figure;
             }
             Turn = board.Turn;
-            Moves = new List<string>(board.Moves);
             Move(move);
         }
         #endregion
