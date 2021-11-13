@@ -1,5 +1,4 @@
-﻿using ChessHttpServer.Respones;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ChessLib;
 using ChessHttpServer.Data;
@@ -8,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 using Newtonsoft.Json;
+using ChessLib.Http.Responses;
 
 namespace ChessHttpServer.Controllers
 {
@@ -47,7 +47,7 @@ namespace ChessHttpServer.Controllers
 
         [Route("creatematch")]
         [HttpGet]
-        public CreateMatchResult CreateMatch([FromQuery] string whiteName, [FromQuery] string blackName)
+        public CreateMatchResponse CreateMatch([FromQuery] string whiteName, [FromQuery] string blackName)
         {
             var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
             try
@@ -63,7 +63,7 @@ namespace ChessHttpServer.Controllers
                     db.ChessMatchs.Add(ChessMatch);
                     db.SaveChanges();
 
-                    return new CreateMatchResult
+                    return new CreateMatchResponse
                     {
                         Success = true,
                         Fen = fen,
@@ -75,7 +75,7 @@ namespace ChessHttpServer.Controllers
             }
             catch (Exception e)
             {
-                return new CreateMatchResult { Success = false, Error = e.ToString() };
+                return new CreateMatchResponse { Success = false, Error = e.ToString() };
             }
         }
 

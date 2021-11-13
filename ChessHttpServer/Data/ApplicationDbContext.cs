@@ -19,8 +19,7 @@ namespace ChessHttpServer.Data
             optionsBuilder
                 .UseMySql(
                 Environment.GetEnvironmentVariable("CONNECTION_STRING"),
-                new MySqlServerVersion(new Version(8, 0, 27))
-                )
+                new MySqlServerVersion(new Version(8, 0, 27)))
                 .UseLazyLoadingProxies();
         }
         public ApplicationDbContext()

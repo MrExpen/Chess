@@ -1,4 +1,4 @@
-﻿namespace ChessHttpServer.Respones
+﻿namespace ChessLib.Http.Responses
 {
     public abstract class BaseResponse
     {

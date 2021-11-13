@@ -1,6 +1,6 @@
-﻿namespace ChessHttpServer.Respones
+﻿namespace ChessLib.Http.Responses
 {
-    public class CreateMatchResult : BaseResponse
+    public class CreateMatchResponse : BaseResponse
     {
         public string WhiteName { get; set; }
         public string BlackName { get; set; }

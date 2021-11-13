@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ChessHttpServer.Respones
+namespace ChessLib.Http.Responses
 {
     public class GetAllFensRespons : BaseResponse
     {
