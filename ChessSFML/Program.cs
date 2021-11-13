@@ -59,7 +59,7 @@ namespace ChessSFML
             _chessBoardSprite = new Sprite(_chessBoardTexture.Texture);
 
             _skinProvider = new SkinProvider(@".\Resouces\ChessPiecesArray.png");
-            _chess = new ChessUI();
+            _chess = new LocalChessWithSelected();
         }
 
         static void Main(string[] args)
