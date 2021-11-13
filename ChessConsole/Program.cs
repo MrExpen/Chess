@@ -13,7 +13,7 @@ namespace ChessConsole
             while (chess.InGame)
             {
                 Console.WriteLine(chess.Fen);
-                Console.WriteLine(string.Join(" ", chess.Figures.Where(f => f?.Color == chess.Turn).SelectMany(x => chess.GetMoves(x.Position).Select(y => $"{x.Position}{y}"))));
+                Console.WriteLine(string.Join(" ", chess.Figures.Where(f => f.Color == chess.Turn).SelectMany(x => chess.GetMoves(x).Select(y => $"{x.Position}{y}"))));
                 for (int y = 7; y >= 0; y--)
                 {
                     for (int x = 0; x < 8; x++)

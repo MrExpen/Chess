@@ -7,5 +7,13 @@ namespace ChessHttpServer.Data
         [Key]
         public int Id { get; set; }
         public string Data { get; set; }
+        public FenStringData()
+        {
+
+        }
+        public FenStringData(string data)
+        {
+            Data = data;
+        }
     }
 }

@@ -63,6 +63,13 @@ namespace ChessLib
             Moves.Add(fen);
             Board = new Board(fen);
         }
+        public LocalChessEngine(params string[] fens) : this(fens.AsEnumerable())
+        {
+        }
+        public LocalChessEngine(IEnumerable<string> fens) : this(fens.Last())
+        {
+            Moves = new List<string>(fens);
+        }
         #endregion
     }
 }
