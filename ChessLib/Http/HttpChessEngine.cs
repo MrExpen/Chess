@@ -61,7 +61,11 @@ namespace ChessLib.Http
             {
                 request.AddQueryParameter("dist", ((char)figure).ToString());
             }
-            var response = JsonConvert.DeserializeObject<MoveResponse>(_restClient.Execute(request).Content);
+            MoveResponse response = null;
+            do
+            {
+                response = JsonConvert.DeserializeObject<MoveResponse>(_restClient.Execute(request).Content);
+            } while (response is null);
             if (response.Success)
             {
                 base.Move(from, to, figure);
@@ -82,8 +86,11 @@ namespace ChessLib.Http
             RestRequest request = new RestRequest($"{Url}/api/chess/creatematch");
             request.AddQueryParameter("whiteName", White);
             request.AddQueryParameter("blackName", Black);
-            var response = JsonConvert.DeserializeObject<CreateMatchResponse>(_restClient.Execute(request).Content);
-
+            CreateMatchResponse response = null;
+            do
+            {
+                response = JsonConvert.DeserializeObject<CreateMatchResponse>(_restClient.Execute(request).Content);
+            } while (response is null);
             return response.Success ? response.MatchId : null;
         }
         public int? CreateMatch(string OponentName)
@@ -93,7 +100,11 @@ namespace ChessLib.Http
             MatchId = matchId;
             RestRequest request = new RestRequest($"{Url}/api/chess/getallfens");
             request.AddQueryParameter("matchId", MatchId.Value.ToString());
-            var response = JsonConvert.DeserializeObject<GetAllFensRespons>(_restClient.Execute(request).Content);
+            GetAllFensRespons response = null;
+            do
+            {
+                response = JsonConvert.DeserializeObject<GetAllFensRespons>(_restClient.Execute(request).Content);
+            } while (response is null);
             if (response.Success)
             {
                 Moves = new List<string>(response.Fens);
