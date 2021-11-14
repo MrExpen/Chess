@@ -1,8 +1,10 @@
 ﻿using System;
 using ChessLib;
+using ChessLib.Http;
 using SFML.Graphics;
 using SFML.Window;
 using SFML.System;
+using System.Linq;
 
 
 namespace ChessSFML
@@ -14,13 +16,24 @@ namespace ChessSFML
         private static readonly RenderTexture _chessBoardTexture;
         private static readonly CircleShape _canMuveTo;
         private static readonly Sprite _chessBoardSprite;
+        private static readonly RectangleShape _buttonExit, _buttonLocalMatch, _buttonOnlineMatch, _buttonJoinMenu, _buttonCreateMenu, _buttonJoin, _buttonCreate;
+        private static readonly RenderTexture _pauseMenuTexture, _newOnlineMenuTexture, _createOnlineMenuTexture, _joinOnlineMenuTexture, _pawnChoseMenuTexture, _resultsMenuTexture;
+        private static readonly Sprite _pauseMenuSprite, _newOnlineMenuSprite, _createOnlineMenuSprite, _joinOnlineMenuSprite, _pawnChoseMenuSprite, _resultsMenuSprite;
+        private static readonly Font _font = new Font(@".\Resouces\Roboto-Bold.ttf");
+        private static Text _textName, _textMatchId, _textWhiteName, _textBlackName;
+        private static Text SelectedText { get; set; }
         private static SkinProvider _skinProvider;
         private static IChessWithSelect _chess;
+        private static GameState _gameState;
         static Program()
         {
             _window = new RenderWindow(new VideoMode(800, 800), "Chess by MrExpen", Styles.Close | Styles.Titlebar);
             _window.Closed += (s, e) => _window.Close();
             _window.MouseButtonReleased += _window_MouseButtonReleased;
+            _window.KeyPressed += _window_KeyPressed;
+            _window.TextEntered += _window_TextEntered;
+
+            _gameState = GameState.InPause;
 
             RectangleShape White = new RectangleShape(new Vector2f(_CELL_LENGTH, _CELL_LENGTH))
             {
@@ -57,8 +70,176 @@ namespace ChessSFML
             }
             _chessBoardTexture.Display();
             _chessBoardSprite = new Sprite(_chessBoardTexture.Texture);
-
             _skinProvider = new SkinProvider(@".\Resouces\ChessPiecesArray.png");
+
+            Text text = new Text(string.Empty, _font, 24)
+            {
+                FillColor = SFML.Graphics.Color.Black
+            };
+            SFML.Graphics.Color ClearColor = SFML.Graphics.Color.White;
+            SFML.Graphics.Color ButtonColor = new SFML.Graphics.Color(200, 200, 200);
+            Vector2f ButtonSize = new Vector2f(_window.Size.X * 0.7f, _window.Size.Y * 0.1f);
+            int Margin = 20;
+
+            _pauseMenuTexture = new RenderTexture(_window.Size.X, _window.Size.Y);
+            _pauseMenuTexture.Clear(ClearColor);
+
+            _textName = new Text("Name", _font, 24) { FillColor = SFML.Graphics.Color.Black };
+            _textName.Origin = new Vector2f(0, _textName.GetGlobalBounds().Height / 2f);
+
+            _textMatchId = new Text("MatchId", _font, 24) { FillColor = SFML.Graphics.Color.Black };
+            _textMatchId.Origin = new Vector2f(0, _textMatchId.GetGlobalBounds().Height / 2f);
+
+            _textWhiteName = new Text("WhiteName", _font, 24) { FillColor = SFML.Graphics.Color.Black };
+            _textWhiteName.Origin = new Vector2f(0, _textWhiteName.GetGlobalBounds().Height / 2f);
+
+            _textBlackName = new Text("BlackName", _font, 24) { FillColor = SFML.Graphics.Color.Black };
+            _textBlackName.Origin = new Vector2f(0, _textBlackName.GetGlobalBounds().Height / 2f);
+
+            #region PauseMenu
+
+            _buttonLocalMatch = new RectangleShape(ButtonSize)
+            {
+                FillColor = ButtonColor
+            };
+            _buttonLocalMatch.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
+            _buttonLocalMatch.Position = ((Vector2f)_window.Size / 2f) - new Vector2f(0, ButtonSize.Y + Margin);
+
+            _buttonOnlineMatch = new RectangleShape(ButtonSize)
+            {
+                FillColor = ButtonColor
+            };
+            _buttonOnlineMatch.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
+            _buttonOnlineMatch.Position = (Vector2f)_window.Size / 2f;
+
+            _buttonExit = new RectangleShape(ButtonSize)
+            {
+                FillColor = ButtonColor
+            };
+            _buttonExit.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
+            _buttonExit.Position = ((Vector2f)_window.Size / 2f) + new Vector2f(0, ButtonSize.Y + Margin);
+
+            _pauseMenuTexture.Draw(_buttonLocalMatch);
+            _pauseMenuTexture.Draw(_buttonOnlineMatch);
+            _pauseMenuTexture.Draw(_buttonExit);
+
+            text.DisplayedString = "Новый локальный матч";
+            var tgb = text.GetGlobalBounds();
+            text.Origin = new Vector2f(tgb.Width / 2f, tgb.Height / 2f);
+            text.Position = _buttonLocalMatch.Position;
+            _pauseMenuTexture.Draw(text);
+
+            text.DisplayedString = "Играть онлайн";
+            tgb = text.GetGlobalBounds();
+            text.Origin = new Vector2f(tgb.Width / 2f, tgb.Height / 2f);
+            text.Position = _buttonOnlineMatch.Position;
+            _pauseMenuTexture.Draw(text);
+
+            text.DisplayedString = "Выйти";
+            tgb = text.GetGlobalBounds();
+            text.Origin = new Vector2f(tgb.Width / 2f, tgb.Height / 2f);
+            text.Position = _buttonExit.Position;
+            _pauseMenuTexture.Draw(text);
+
+            _pauseMenuTexture.Display();
+            _pauseMenuSprite = new Sprite(_pauseMenuTexture.Texture);
+            #endregion
+
+            #region NewOnline
+
+            _buttonJoinMenu = new RectangleShape(ButtonSize)
+            {
+                FillColor = ButtonColor
+            };
+            _buttonJoinMenu.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
+            _buttonJoinMenu.Position = (Vector2f)_window.Size / 2f - new Vector2f(0, (ButtonSize.Y + Margin) / 2f);
+
+            _buttonCreateMenu = new RectangleShape(ButtonSize)
+            {
+                FillColor = ButtonColor
+            };
+            _buttonCreateMenu.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
+            _buttonCreateMenu.Position = (Vector2f)_window.Size / 2f + new Vector2f(0, (ButtonSize.Y + Margin) / 2f);
+
+            _newOnlineMenuTexture = new RenderTexture(_window.Size.X, _window.Size.Y);
+            _newOnlineMenuTexture.Clear(ClearColor);
+
+            _newOnlineMenuTexture.Draw(_buttonJoinMenu);
+            _newOnlineMenuTexture.Draw(_buttonCreateMenu);
+
+            text.DisplayedString = "Присоединиться к матчу";
+            tgb = text.GetGlobalBounds();
+            text.Origin = new Vector2f(tgb.Width / 2f, tgb.Height / 2f);
+            text.Position = _buttonJoinMenu.Position;
+            _newOnlineMenuTexture.Draw(text);
+
+            text.DisplayedString = "Создать новый матч";
+            tgb = text.GetGlobalBounds();
+            text.Origin = new Vector2f(tgb.Width / 2f, tgb.Height / 2f);
+            text.Position = _buttonCreateMenu.Position;
+            _newOnlineMenuTexture.Draw(text);
+
+            _newOnlineMenuTexture.Display();
+
+            _newOnlineMenuSprite = new Sprite(_newOnlineMenuTexture.Texture);
+            #endregion
+
+            #region Join
+            _joinOnlineMenuTexture = new RenderTexture(_window.Size.X, _window.Size.Y);
+            _joinOnlineMenuTexture.Clear(ClearColor);
+
+            _buttonJoin = new RectangleShape(ButtonSize)
+            {
+                FillColor = ButtonColor
+            };
+            _buttonJoin.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
+            _buttonJoin.Position = (Vector2f)_window.Size / 2f + new Vector2f(0, ButtonSize.Y + Margin);
+
+            _textName.Position = (Vector2f)_window.Size / 2f - new Vector2f(0, ButtonSize.Y + Margin);
+
+            _textMatchId.Position = (Vector2f)_window.Size / 2f;
+
+            _joinOnlineMenuTexture.Draw(_buttonJoin);
+
+            text.DisplayedString = "Присоединиться";
+            tgb = text.GetGlobalBounds();
+            text.Origin = new Vector2f(tgb.Width / 2f, tgb.Height / 2f);
+            text.Position = _buttonJoin.Position;
+            _joinOnlineMenuTexture.Draw(text);
+
+            _joinOnlineMenuTexture.Display();
+            _joinOnlineMenuSprite = new Sprite(_joinOnlineMenuTexture.Texture);
+
+            #endregion
+
+            #region Create
+            _createOnlineMenuTexture = new RenderTexture(_window.Size.X, _window.Size.Y);
+            _createOnlineMenuTexture.Clear(ClearColor);
+
+            _buttonCreate = new RectangleShape(ButtonSize)
+            {
+                FillColor = ButtonColor
+            };
+            _buttonCreate.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
+            _buttonCreate.Position = (Vector2f)_window.Size / 2f + new Vector2f(0, ButtonSize.Y + Margin);
+
+            _textWhiteName.Position = (Vector2f)_window.Size / 2f - new Vector2f(0, ButtonSize.Y + Margin);
+
+            _textBlackName.Position = (Vector2f)_window.Size / 2f;
+
+            _createOnlineMenuTexture.Draw(_buttonCreate);
+
+            text.DisplayedString = "Создать";
+            tgb = text.GetGlobalBounds();
+            text.Origin = new Vector2f(tgb.Width / 2f, tgb.Height / 2f);
+            text.Position = _buttonCreate.Position;
+            _createOnlineMenuTexture.Draw(text);
+
+            _createOnlineMenuTexture.Display();
+            _createOnlineMenuSprite = new Sprite(_createOnlineMenuTexture.Texture);
+
+            #endregion
+
             _chess = new LocalChessWithSelected();
         }
 
@@ -71,50 +252,260 @@ namespace ChessSFML
 
 
                 _window.Clear(SFML.Graphics.Color.White);
-                _window.Draw(_chessBoardSprite);
-                foreach (var Figure in _chess.Figures)
+                switch (_gameState)
                 {
-                    _skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)].Position = new Vector2f(_CELL_LENGTH * Figure.Position.X + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * Figure.Position.Y + _CELL_LENGTH / 2);
-                    _window.Draw(_skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)]);
-                }
-                foreach (var position in _chess.MovesForSelected)
-                {
-                    _canMuveTo.Position = new Vector2f(position.X * _CELL_LENGTH + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * position.Y + _CELL_LENGTH / 2);
-                    _window.Draw(_canMuveTo);
+                    case GameState.InPause:
+                        {
+                            _window.Draw(_pauseMenuSprite);
+                        }
+                        break;
+
+                    case GameState.InGame:
+                        {
+                            _window.Draw(_chessBoardSprite);
+                            foreach (var Figure in _chess.Figures)
+                            {
+                                _skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)].Position = new Vector2f(_CELL_LENGTH * Figure.Position.X + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * Figure.Position.Y + _CELL_LENGTH / 2);
+                                _window.Draw(_skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)]);
+                            }
+                            foreach (var position in _chess.MovesForSelected)
+                            {
+                                _canMuveTo.Position = new Vector2f(position.X * _CELL_LENGTH + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * position.Y + _CELL_LENGTH / 2);
+                                _window.Draw(_canMuveTo);
+                            }
+                        }
+                        break;
+
+                    case GameState.NewOnline:
+                        _window.Draw(_newOnlineMenuSprite);
+                        break;
+
+                    case GameState.JoinOnline:
+                        {
+                            _window.Draw(_joinOnlineMenuSprite);
+                            _window.Draw(_textName);
+                            _window.Draw(_textMatchId);
+                        }
+                        break;
+
+                    case GameState.CreateOnline:
+                        {
+                            _window.Draw(_createOnlineMenuSprite);
+                            _window.Draw(_textWhiteName);
+                            _window.Draw(_textBlackName);
+                        }
+                        break;
+
+                    case GameState.ShowResults:
+                        break;
                 }
                 _window.Display();
             }
         }
 
+        private static void _window_TextEntered(object sender, TextEventArgs e)
+        {
+            switch (_gameState)
+            {
+                case GameState.CreateOnline:
+                    {
+                        if (SelectedText == _textWhiteName || SelectedText == _textBlackName)
+                        {
+                            if (e.Unicode == "\b")
+                            {
+                                SelectedText.DisplayedString = SelectedText.DisplayedString.Length != 0 ? SelectedText.DisplayedString.Substring(0, SelectedText.DisplayedString.Length - 1) : string.Empty;
+                            }
+                            else
+                            {
+                                if (new[] { "\r", "\t" }.Contains(e.Unicode))
+                                {
+                                    return;
+                                }
+                                SelectedText.DisplayedString += e.Unicode;
+                            }
+                        }
+                    }
+                    break;
+                case GameState.JoinOnline:
+                    {
+                        if (SelectedText == _textName || SelectedText == _textMatchId)
+                        {
+                            if (e.Unicode == "\b")
+                            {
+                                SelectedText.DisplayedString = SelectedText.DisplayedString.Length != 0 ? SelectedText.DisplayedString.Substring(0, SelectedText.DisplayedString.Length - 1) : string.Empty;
+                            }
+                            else
+                            {
+                                if (new[] {"\r", "\t"}.Contains(e.Unicode))
+                                {
+                                    return;
+                                }
+                                SelectedText.DisplayedString += e.Unicode;
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+        private static void _window_KeyPressed(object sender, KeyEventArgs e)
+        {
+            if (e.Code == Keyboard.Key.Escape)
+            {
+                switch (_gameState)
+                {
+                    case GameState.InPause:
+                        _gameState = GameState.InGame;
+                        break;
+
+                    case GameState.InGame:
+                        _gameState = GameState.InPause;
+                        break;
+
+                    case GameState.CreateOnline:
+                        _gameState = GameState.NewOnline;
+                        break;
+
+                    case GameState.JoinOnline:
+                        _gameState = GameState.NewOnline;
+                        break;
+
+                    case GameState.NewOnline:
+                        _gameState = GameState.InPause;
+                        break;
+
+                    case GameState.ShowResults:
+                        _gameState = GameState.InGame;
+                        break;
+                }
+            }
+        }
         private static void _window_MouseButtonReleased(object sender, MouseButtonEventArgs e)
         {
-            if (e.Button == Mouse.Button.Right)
+            switch (_gameState)
             {
-                _chess.Selected = null;
-            }
-            else if (e.Button == Mouse.Button.Left)
-            {
-                if (!_chess.Selected.HasValue)
-                {
-                    _chess.Selected = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
-                }
-                else
-                {
-                    var pos = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
-                    if (_chess.Selected.Value == pos)
+                case GameState.InPause:
                     {
-                        _chess.Selected = null;
+                        if (_buttonLocalMatch.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            if (_chess is HttpChessWithSelect select)
+                            {
+                                select.Dispose();
+                            }
+                            _chess = new LocalChessWithSelected();
+                            _gameState = GameState.InGame;
+                        }
+                        else if (_buttonOnlineMatch.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            _gameState = GameState.NewOnline;
+                        }
+                        else if(_buttonExit.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            _window.Close();
+                        }
                     }
-                    else if (_chess.GetFigure(pos) is not null && _chess.GetFigure(pos).Color == _chess.Turn)
+                    break;
+
+                case GameState.InGame:
                     {
-                        _chess.Selected = pos;
+                        if (e.Button == Mouse.Button.Right)
+                        {
+                            _chess.Selected = null;
+                        }
+                        else if (e.Button == Mouse.Button.Left)
+                        {
+                            if (!_chess.Selected.HasValue)
+                            {
+                                _chess.Selected = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
+                            }
+                            else
+                            {
+                                var pos = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
+                                if (_chess.Selected.Value == pos)
+                                {
+                                    _chess.Selected = null;
+                                }
+                                else if (_chess.GetFigure(pos) is not null && _chess.GetFigure(pos).Color == _chess.Turn)
+                                {
+                                    _chess.Selected = pos;
+                                }
+                                else
+                                {
+                                    _chess.Move(_chess.Selected.Value, pos);
+                                    _chess.Selected = null;
+                                }
+                            }
+                        }
                     }
-                    else
+                    break;
+
+                case GameState.NewOnline:
                     {
-                        _chess.Move(_chess.Selected.Value, pos);
-                        _chess.Selected = null;
+                        if (_buttonJoinMenu.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            _gameState = GameState.JoinOnline;
+                        }
+                        else if (_buttonCreateMenu.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            _gameState = GameState.CreateOnline;
+                        }
                     }
-                }
+                    break;
+
+                case GameState.ShowResults:
+                    break;
+
+                case GameState.CreateOnline:
+                    {
+                        if (_buttonCreate.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            if (_chess is HttpChessWithSelect select)
+                            {
+                                select.Dispose();
+                            }
+                            var chess = new HttpChessWithSelect(_textName.DisplayedString, "https://chess.mrexpen.ru:4432");
+
+                            var MatchId = chess.CreateMatch(_textWhiteName.DisplayedString, _textBlackName.DisplayedString);
+                            //TODO: checks
+                            _textMatchId.DisplayedString = MatchId.ToString();
+                            _gameState = GameState.JoinOnline;
+                        }
+                        else if (_textWhiteName.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            SelectedText = _textWhiteName;
+                        }
+                        else if (_textBlackName.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            SelectedText = _textBlackName;
+                        }
+                    }
+                    break;
+
+                case GameState.JoinOnline:
+                    {
+                        if (_buttonJoin.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            if (_chess is HttpChessWithSelect select)
+                            {
+                                select.Dispose();
+                            }
+                            var chess = new HttpChessWithSelect(_textName.DisplayedString, "https://chess.mrexpen.ru:4432");
+
+                            //TODO: checks
+                            chess.JoinMatch(int.Parse(_textMatchId.DisplayedString));
+
+                            _chess = chess;
+                            _gameState = GameState.InGame;
+                        }
+                        else if (_textName.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            SelectedText = _textName;
+                        }
+                        else if (_textMatchId.GetGlobalBounds().Contains(e.X, e.Y))
+                        {
+                            SelectedText = _textMatchId;
+                        }
+                    }
+                    break;
             }
         }
     }

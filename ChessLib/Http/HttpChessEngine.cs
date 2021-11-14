@@ -12,7 +12,7 @@ using System.Timers;
 
 namespace ChessLib.Http
 {
-    public class HttpChessEngine : LocalChessEngine, IChessEngine
+    public class HttpChessEngine : LocalChessEngine, IChessEngine, IDisposable
     {
         private RestClient _restClient { get; set; }
         public string Name { get; set; }
@@ -65,25 +65,25 @@ namespace ChessLib.Http
             if (response.Success)
             {
                 base.Move(from, to, figure);
+                if (!InGame)
+                {
+                    Timer.Stop();
+                }
             }
             return response.Success;
         }
         
-        public bool CreateMatch(string OponentName)
+        public int? CreateMatch(string White, string Black)
         {
             RestRequest request = new RestRequest($"{Url}/api/chess/creatematch");
-            request.AddQueryParameter("whiteName", Name);
-            request.AddQueryParameter("blackName", OponentName);
+            request.AddQueryParameter("whiteName", White);
+            request.AddQueryParameter("blackName", Black);
             var response = JsonConvert.DeserializeObject<CreateMatchResponse>(_restClient.Execute(request).Content);
 
-            if (response.Success)
-            {
-                MatchId = response.MatchId;
-                MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : throw new Exception();
-            }
-
-            return response.Success;
+            return response.Success ? response.MatchId : null;
         }
+        public int? CreateMatch(string OponentName)
+            => CreateMatch(Name, OponentName);
         public bool JoinMatch(int matchId)
         {
             MatchId = matchId;
@@ -95,6 +95,7 @@ namespace ChessLib.Http
                 Moves = new List<string>(response.Fens);
                 Board = new Board(Moves.Last());
                 MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : throw new Exception();
+                Timer.Start();
             }
             return response.Success;
         }
@@ -113,11 +114,10 @@ namespace ChessLib.Http
             Url = url;
             
         }
-        public HttpChessEngine()
+        private HttpChessEngine()
         {
             _restClient = new RestClient();
             Timer.Elapsed += Timer_Elapsed;
-            Timer.Start();
         }
         #endregion
 
@@ -136,6 +136,11 @@ namespace ChessLib.Http
                 }
                 catch (Exception) { }
             }
+        }
+
+        public void Dispose()
+        {
+            Timer.Dispose();
         }
     }
 }
