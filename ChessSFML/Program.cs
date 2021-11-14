@@ -72,7 +72,7 @@ namespace ChessSFML
             _chessBoardSprite = new Sprite(_chessBoardTexture.Texture);
             _skinProvider = new SkinProvider(@".\Resouces\ChessPiecesArray.png");
 
-            Text text = new Text(string.Empty, _font, 24)
+            Text text = new Text(string.Empty, _font, 30)
             {
                 FillColor = SFML.Graphics.Color.Black
             };
@@ -259,7 +259,7 @@ namespace ChessSFML
             {
                 _window.DispatchEvents();
 
-                if (!_chess.InGame)
+                if (!_chess.InGame && _gameState == GameState.InGame)
                 {
                     _gameState = GameState.ShowResults;
                     if (_chess.IsTie)
@@ -283,6 +283,7 @@ namespace ChessSFML
                         }
                         break;
 
+                    case GameState.Spectate:
                     case GameState.InGame:
                         {
                             _window.Draw(_chessBoardSprite);
@@ -386,6 +387,7 @@ namespace ChessSFML
                         _gameState = GameState.InGame;
                         break;
 
+                    case GameState.Spectate:
                     case GameState.InGame:
                         _gameState = GameState.InPause;
                         break;
@@ -403,7 +405,7 @@ namespace ChessSFML
                         break;
 
                     case GameState.ShowResults:
-                        _gameState = GameState.InGame;
+                        _gameState = GameState.Spectate;
                         break;
                 }
             }

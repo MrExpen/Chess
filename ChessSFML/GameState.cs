@@ -9,6 +9,7 @@ namespace ChessSFML
     internal enum GameState : byte
     {
         None,
+        Spectate,
         InPause,
         InGame,
         CreateOnline,
