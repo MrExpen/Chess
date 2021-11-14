@@ -10,7 +10,7 @@ namespace ChessLib
 {
     public class LocalChessEngine : IChessEngine
     {
-        protected Board Board { get; protected set; }
+        protected Board Board { get; set; }
         public Color Turn => Board.Turn;
         public string Fen => Board.Fen;
         public Color Winner
