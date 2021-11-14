@@ -157,7 +157,7 @@ namespace ChessHttpServer.Controllers
                         return new GetAllFensRespons { Success = true, Fens = result };
                     }
                 }
-                await Task.Delay(1000);
+                await Task.Delay(500);
             } while (DateTime.Now.Ticks - startTime < time);
             return new GetAllFensRespons { Success = true, Fens = result };
         }
