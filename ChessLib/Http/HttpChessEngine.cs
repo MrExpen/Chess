@@ -94,7 +94,7 @@ namespace ChessLib.Http
             {
                 Moves = new List<string>(response.Fens);
                 Board = new Board(Moves.Last());
-                MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : throw new Exception();
+                MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : Color.None;
                 Timer.Start();
             }
             return response.Success;
