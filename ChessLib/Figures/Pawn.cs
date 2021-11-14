@@ -27,11 +27,11 @@ namespace ChessLib.Figures
                 {
                     movePositions.Add(new ChessPosition(Position.X, Position.Y + 2));
                 }
-                if (new ChessPosition(Position.X + 1, Position.Y + 1).IsOnBoard && board.Figures[Position.X + 1, Position.Y + 1] is not null)
+                if (new ChessPosition(Position.X + 1, Position.Y + 1).IsOnBoard && board.Figures[Position.X + 1, Position.Y + 1] is not null && board.Figures[Position.X + 1, Position.Y + 1].Color != Color)
                 {
                     movePositions.Add(new ChessPosition(Position.X + 1, Position.Y + 1));
                 }
-                if (new ChessPosition(Position.X - 1, Position.Y + 1).IsOnBoard && board.Figures[Position.X - 1, Position.Y + 1] is not null)
+                if (new ChessPosition(Position.X - 1, Position.Y + 1).IsOnBoard && board.Figures[Position.X - 1, Position.Y + 1] is not null && board.Figures[Position.X - 1, Position.Y + 1].Color != Color)
                 {
                     movePositions.Add(new ChessPosition(Position.X - 1, Position.Y + 1));
                 }

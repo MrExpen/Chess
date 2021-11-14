@@ -123,7 +123,7 @@ namespace ChessLib.Figures
 
                     if (can)
                     {
-                        chessPositions.Add(new ChessPosition(6, 7));
+                        chessPositions.Add(new ChessPosition(2, 7));
                     }
                 }
                 if (board.BlackShortCastling)
@@ -151,7 +151,7 @@ namespace ChessLib.Figures
 
                     if (can)
                     {
-                        chessPositions.Add(new ChessPosition(2, 7));
+                        chessPositions.Add(new ChessPosition(6, 7));
                     }
                 }
             }
