@@ -8,3 +8,5 @@ services:
       dockerfile: ChessHttpServer/Dockerfile
     environment:
       CONNECTION_STRING: ""
+    volumes:
+      - "/etc/letsencrypt:/etc/letsencrypt"
