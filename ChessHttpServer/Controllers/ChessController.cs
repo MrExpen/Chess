@@ -124,5 +124,42 @@ namespace ChessHttpServer.Controllers
                 return new GetAllFensRespons { Success = true, Fens = Match.Fens.Select(x => x.Data), BlackName = Match.BlackName, WhiteName = Match.WhiteName };
             }
         }
+
+        [Route("pollinggetfens")]
+        [HttpGet]
+        public async Task<GetAllFensRespons> PollingGetFens([FromQuery] int? matchId, [FromQuery] int lastMove, [FromQuery] int? time = 25)
+        {
+            var startTime = DateTime.Now.Ticks;
+            List<string> result;
+            if (!matchId.HasValue)
+            {
+                return new GetAllFensRespons
+                {
+                    Success = false,
+                    Error = "matchId not set"
+                };
+            }
+            do
+            {
+                using (var db = new ApplicationDbContext())
+                {
+                    var Match = await db.ChessMatchs.FindAsync(matchId.Value);
+                    if (Match is null)
+                    {
+                        return new GetAllFensRespons { Success = false, Error = "Match not found" };
+                    }
+                    result = Match.Fens
+                                        .Where(f => int.Parse(f.Data.Split().Last()) > lastMove)
+                                        .Select(f => f.Data)
+                                        .ToList();
+                    if (result.Count != 0)
+                    {
+                        return new GetAllFensRespons { Success = true, Fens = result };
+                    }
+                }
+                await Task.Delay(500);
+            } while (DateTime.Now.Ticks - startTime < time);
+            return new GetAllFensRespons { Success = true, Fens = result };
+        }
     }
 }

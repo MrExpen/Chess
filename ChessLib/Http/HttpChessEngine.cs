@@ -9,12 +9,14 @@ using Newtonsoft.Json;
 using ChessLib.Http.Responses;
 using ChessLib.Exceptions;
 using System.Timers;
+using System.Threading;
 
 namespace ChessLib.Http
 {
     public class HttpChessEngine : LocalChessEngine, IChessEngine, IDisposable
     {
         private RestClient _restClient { get; set; }
+        private RestClient _restClientTimeout { get; set; }
         public string Name { get; set; }
         public int? MatchId { get; private set; }
         public Color? MyColor { get; private set; }
@@ -29,7 +31,7 @@ namespace ChessLib.Http
             }
         }
         private string _url;
-        private Timer Timer { get; set; } = new Timer(1000);
+        private Thread UpdateThread;
 
         public override IEnumerable<ChessPosition> GetMoves(int x, int y)
         {
@@ -69,14 +71,6 @@ namespace ChessLib.Http
             if (response.Success)
             {
                 base.Move(from, to, figure);
-                if (!InGame)
-                {
-                    Timer.Stop();
-                }
-                else
-                {
-                    Timer.Start();
-                }
             }
             return response.Success;
         }
@@ -110,12 +104,45 @@ namespace ChessLib.Http
                 Moves = new List<string>(response.Fens);
                 Board = new Board(Moves.Last());
                 MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : Color.None;
-                if (!MyTurn || MyColor == Color.None)
-                {
-                    Timer.Start();
-                }
             }
             return response.Success;
+        }
+        private void StartUpdating()
+        {
+            UpdateThread = new Thread(async () =>
+            {
+                while (true)
+                {
+                    if (!MatchId.HasValue)
+                    {
+                        await Task.Delay(100);
+                    }
+                    else
+                    {
+                        RestRequest request = new RestRequest($"{Url}/api/chess/pollinggetfens");
+                        request.AddQueryParameter("matchId", MatchId.Value.ToString());
+                        request.AddQueryParameter("time", 25.ToString());
+                        request.AddQueryParameter("lastMove", Fen.Split().Last());
+                        var resp = await _restClientTimeout.ExecuteAsync(request);
+                        var response = JsonConvert.DeserializeObject<GetAllFensRespons>(resp.Content);
+                        if (response is not null && response.Success)
+                        {
+                            foreach (var fen in response.Fens)
+                            {
+                                if (!Moves.Contains(fen))
+                                {
+                                    Moves.Add(fen);
+                                }
+                            }
+                            if (response.Fens.Count() != 0 && Moves.Count != 0)
+                            {
+                                Board = new Board(Moves.Last());
+                            }
+                        }
+                    }
+                }
+            });
+            UpdateThread.Start();
         }
         public string GetLastFen()
         {
@@ -135,34 +162,15 @@ namespace ChessLib.Http
         private HttpChessEngine()
         {
             _restClient = new RestClient();
-            Timer.Elapsed += Timer_Elapsed;
+            _restClientTimeout = new RestClient();
+            _restClientTimeout.Timeout = 30000;
+            StartUpdating();
         }
         #endregion
 
-        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            if (MatchId.HasValue)
-            {
-                try
-                {
-                    var newFen = GetLastFen();
-                    if (newFen != Fen)
-                    {
-                        Moves.Add(newFen);
-                        Board = new Board(newFen);
-                    }
-                    if (MyTurn)
-                    {
-                        Timer.Stop();
-                    }
-                }
-                catch (Exception) { }
-            }
-        }
-
         public void Dispose()
         {
-            Timer.Dispose();
+            UpdateThread.Join();
         }
     }
 }
