@@ -69,6 +69,10 @@ namespace ChessLib.Http
                 {
                     Timer.Stop();
                 }
+                else
+                {
+                    Timer.Start();
+                }
             }
             return response.Success;
         }
@@ -95,7 +99,10 @@ namespace ChessLib.Http
                 Moves = new List<string>(response.Fens);
                 Board = new Board(Moves.Last());
                 MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : Color.None;
-                Timer.Start();
+                if (!MyTurn || MyColor == Color.None)
+                {
+                    Timer.Start();
+                }
             }
             return response.Success;
         }
@@ -132,6 +139,10 @@ namespace ChessLib.Http
                     {
                         Moves.Add(newFen);
                         Board = new Board(newFen);
+                    }
+                    if (MyTurn)
+                    {
+                        Timer.Stop();
                     }
                 }
                 catch (Exception) { }

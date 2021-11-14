@@ -17,10 +17,10 @@ namespace ChessSFML
         private static readonly CircleShape _canMuveTo;
         private static readonly Sprite _chessBoardSprite;
         private static readonly RectangleShape _buttonExit, _buttonLocalMatch, _buttonOnlineMatch, _buttonJoinMenu, _buttonCreateMenu, _buttonJoin, _buttonCreate;
-        private static readonly RenderTexture _pauseMenuTexture, _newOnlineMenuTexture, _createOnlineMenuTexture, _joinOnlineMenuTexture, _pawnChoseMenuTexture, _resultsMenuTexture;
-        private static readonly Sprite _pauseMenuSprite, _newOnlineMenuSprite, _createOnlineMenuSprite, _joinOnlineMenuSprite, _pawnChoseMenuSprite, _resultsMenuSprite;
+        private static readonly RenderTexture _pauseMenuTexture, _newOnlineMenuTexture, _createOnlineMenuTexture, _joinOnlineMenuTexture, _resultsMenuTexture;
+        private static readonly Sprite _pauseMenuSprite, _newOnlineMenuSprite, _createOnlineMenuSprite, _joinOnlineMenuSprite, _resultsMenuSprite;
         private static readonly Font _font = new Font(@".\Resouces\Roboto-Bold.ttf");
-        private static Text _textName, _textMatchId, _textWhiteName, _textBlackName;
+        private static Text _textName, _textMatchId, _textWhiteName, _textBlackName, _textResult;
         private static Text SelectedText { get; set; }
         private static SkinProvider _skinProvider;
         private static IChessWithSelect _chess;
@@ -95,6 +95,8 @@ namespace ChessSFML
 
             _textBlackName = new Text("BlackName", _font, 24) { FillColor = SFML.Graphics.Color.Black };
             _textBlackName.Origin = new Vector2f(0, _textBlackName.GetGlobalBounds().Height / 2f);
+
+            _textResult = new Text(string.Empty, _font, 24) { FillColor = SFML.Graphics.Color.Black, Position = (Vector2f)_window.Size / 2f };
 
             #region PauseMenu
 
@@ -240,6 +242,13 @@ namespace ChessSFML
 
             #endregion
 
+            #region Result
+            _resultsMenuTexture = new RenderTexture(_window.Size.X, _window.Size.Y);
+            _resultsMenuTexture.Clear(ClearColor);
+            _resultsMenuTexture.Display();
+            _resultsMenuSprite = new Sprite(_resultsMenuTexture.Texture);
+            #endregion
+
             _chess = new LocalChessWithSelected();
         }
 
@@ -250,6 +259,20 @@ namespace ChessSFML
             {
                 _window.DispatchEvents();
 
+                if (!_chess.InGame)
+                {
+                    _gameState = GameState.ShowResults;
+                    if (_chess.IsTie)
+                    {
+                        _textResult.DisplayedString = "Ничья.";
+                    }
+                    else
+                    {
+                        _textResult.DisplayedString = (_chess.Winner == ChessLib.Color.White ? "Белый" : "Чёрный") + " цвет победил.";
+                    }
+                    var gb = _textResult.GetGlobalBounds();
+                    _textResult.Origin = new Vector2f(gb.Width / 2f, gb.Height / 2f);
+                }
 
                 _window.Clear(SFML.Graphics.Color.White);
                 switch (_gameState)
@@ -277,7 +300,9 @@ namespace ChessSFML
                         break;
 
                     case GameState.NewOnline:
-                        _window.Draw(_newOnlineMenuSprite);
+                        {
+                            _window.Draw(_newOnlineMenuSprite);
+                        }
                         break;
 
                     case GameState.JoinOnline:
@@ -297,6 +322,10 @@ namespace ChessSFML
                         break;
 
                     case GameState.ShowResults:
+                        {
+                            _window.Draw(_resultsMenuSprite);
+                            _window.Draw(_textResult);
+                        }
                         break;
                 }
                 _window.Display();

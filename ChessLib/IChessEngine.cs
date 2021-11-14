@@ -12,6 +12,8 @@ namespace ChessLib
         Color Turn { get; }
         string Fen { get; }
         bool InGame { get; }
+        Color Winner { get; }
+        bool IsTie { get; }
 
         IEnumerable<ChessFigure> Figures { get; }
 
