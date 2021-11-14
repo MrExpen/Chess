@@ -18,7 +18,7 @@ namespace ChessLib.Figures
             {
                 return new ChessMove(this, FigureCreater.CreateFigure(figure == EnumFigure.None ? EnumFigure : figure, Color, to), board.Figures[to.X, to.Y]);
             }
-            throw new ArgumentException();
+            throw new Exceptions.CannotMoveException();
         }
         public virtual List<ChessPosition> GetMovePositionsWithCheckCheck(Board board)
             => RemoveChecks(GetMovePositions(board), board);
@@ -30,7 +30,7 @@ namespace ChessLib.Figures
             foreach (ChessPosition movePosition in move)
             {
                 Board NewBoard = new Board(board, new ChessMove(this, FigureCreater.CreateFigure(EnumFigure, Color, movePosition)));
-                if (!NewBoard.Check(board.Turn))
+                if (!NewBoard.IsChecked(board.Turn))
                 {
                     chessPositions.Add(movePosition);
                 }

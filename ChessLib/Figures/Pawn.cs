@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading.Tasks;
+using ChessLib.Exceptions;
 
 namespace ChessLib.Figures
 {
@@ -94,7 +95,7 @@ namespace ChessLib.Figures
                 }
                 return new ChessMove(this, FigureCreater.CreateFigure(((to.Y % 7 == 0) && figure == EnumFigure.None) ? EnumFigure.Queen : (figure == EnumFigure.None) ? EnumFigure : throw new ArgumentException(), Color, to), board.Figures[to.X, to.Y]);
             }
-            throw new ArgumentException();
+            throw new CannotMoveException();
         }
 
         #region Ctor

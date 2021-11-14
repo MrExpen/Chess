@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  chesshttpserver:
+    image: ${DOCKER_REGISTRY-}chesshttpserver
+    build:
+      context: .
+      dockerfile: ChessHttpServer/Dockerfile
+    environment:
+      CONNECTION_STRING: ""
+    volumes:
+      - "/etc/letsencrypt:/etc/letsencrypt"
