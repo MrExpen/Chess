@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using ChessLib;
+using ChessLib.Http;
 using ChessLib.Figures;
 
 namespace ChessConsole
@@ -9,7 +10,8 @@ namespace ChessConsole
     {
         static void Main(string[] args)
         {
-            IChessEngine chess = new LocalChessEngine();
+            HttpChessEngine chess = new HttpChessEngine(args[0], "https://chess.mrexpen.ru:4432/");
+            chess.JoinMatch(1);
             while (chess.InGame)
             {
                 Console.WriteLine(chess.Fen);
@@ -24,15 +26,16 @@ namespace ChessConsole
                 }
                 var move = Console.ReadLine();
                 Console.Clear();
-                try
+                bool reslut = false;
+                if (move.Length > 4)
                 {
-                    if (move.Length > 4)
-                    {
-                        chess.Move(new ChessPosition(move.Substring(0, 2)), new ChessPosition(move.Substring(2, 2)), (EnumFigure)move[4]);
-                    }
-                    chess.Move(new ChessPosition(move.Substring(0, 2)), new ChessPosition(move.Substring(2, 2)));
+                    reslut = chess.Move(new ChessPosition(move.Substring(0, 2)), new ChessPosition(move.Substring(2, 2)), (EnumFigure)move[4]);
                 }
-                catch (ArgumentException)
+                else
+                {
+                    reslut = chess.Move(new ChessPosition(move.Substring(0, 2)), new ChessPosition(move.Substring(2, 2)));
+                }
+                if (!reslut)
                 {
                     Console.WriteLine("Invalid input");
                 }

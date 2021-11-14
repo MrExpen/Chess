@@ -98,7 +98,7 @@ namespace ChessHttpServer.Controllers
                 {
                     return new GetLastFenResponse { Success = false, Error = "Match not found" };
                 }
-                return new GetLastFenResponse { Success = true, Fen = Match.Fens.Last().Data };
+                return new GetLastFenResponse { Success = true, Fen = Match.Fens.Last().Data, BlackName = Match.BlackName, WhiteName = Match.WhiteName };
             }
         }
 
@@ -121,7 +121,7 @@ namespace ChessHttpServer.Controllers
                 {
                     return new GetAllFensRespons { Success = false, Error = "Match not found" };
                 }
-                return new GetAllFensRespons { Success = true, Fens = Match.Fens.Select(x => x.Data) };
+                return new GetAllFensRespons { Success = true, Fens = Match.Fens.Select(x => x.Data), BlackName = Match.BlackName, WhiteName = Match.WhiteName };
             }
         }
     }

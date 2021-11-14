@@ -8,6 +8,7 @@ using RestSharp;
 using Newtonsoft.Json;
 using ChessLib.Http.Responses;
 using ChessLib.Exceptions;
+using System.Timers;
 
 namespace ChessLib.Http
 {
@@ -16,6 +17,7 @@ namespace ChessLib.Http
         private RestClient _restClient { get; set; }
         public string Name { get; set; }
         public int? MatchId { get; private set; }
+        public Color? MyColor { get; private set; }
         public string Url
         {
             get => _url;
@@ -26,6 +28,7 @@ namespace ChessLib.Http
             }
         }
         private string _url;
+        private Timer Timer { get; set; } = new Timer(1000);
 
         public override IEnumerable<ChessPosition> GetMoves(int x, int y)
         {
@@ -43,7 +46,7 @@ namespace ChessLib.Http
             {
                 throw new YouAreNotInMatchException();
             }
-            RestRequest request = new RestRequest("api/move", Method.GET);
+            RestRequest request = new RestRequest("api/chess/move", Method.GET);
             request.AddQueryParameter("name", Name);
             request.AddQueryParameter("matchId", Name);
             if (figure != EnumFigure.None)
@@ -60,22 +63,30 @@ namespace ChessLib.Http
         
         public bool CreateMatch(string OponentName)
         {
-            RestRequest request = new RestRequest("api/creatematch");
+            RestRequest request = new RestRequest("api/chess/creatematch");
             request.AddQueryParameter("whiteName", Name);
             request.AddQueryParameter("blackName", OponentName);
             var response = JsonConvert.DeserializeObject<CreateMatchResponse>(_restClient.Execute(request).Content);
+
+            if (response.Success)
+            {
+                MatchId = response.MatchId;
+                MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.White : throw new Exception();
+            }
+
             return response.Success;
         }
         public bool JoinMatch(int matchId)
         {
             MatchId = matchId;
-            RestRequest request = new RestRequest("api/creatematch");
+            RestRequest request = new RestRequest("api/chess/creatematch");
             request.AddQueryParameter("matchId", MatchId.Value.ToString());
             var response = JsonConvert.DeserializeObject<GetAllFensRespons>(_restClient.Execute(request).Content);
             if (response.Success)
             {
                 Moves = new List<string>(response.Fens);
                 Board = new Board(Moves.Last());
+                MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.White : throw new Exception();
             }
             return response.Success;
         }
@@ -97,6 +108,20 @@ namespace ChessLib.Http
         public HttpChessEngine()
         {
             _restClient = new RestClient();
+            Timer.Elapsed += Timer_Elapsed;
+        }
+
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            if (MatchId.HasValue)
+            {
+                var newFen = GetLastFen();
+                if (newFen != Fen)
+                {
+                    Moves.Add(newFen);
+                    Board = new Board(newFen);
+                }
+            }
         }
         #endregion
     }
