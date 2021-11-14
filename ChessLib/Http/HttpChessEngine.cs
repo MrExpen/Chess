@@ -18,13 +18,14 @@ namespace ChessLib.Http
         public string Name { get; set; }
         public int? MatchId { get; private set; }
         public Color? MyColor { get; private set; }
+        public bool MyTurn 
+            => MatchId.HasValue ? MyColor.Value == Turn : throw new YouAreNotInMatchException();
         public string Url
         {
             get => _url;
             set
             {
-                _url = value;
-                _restClient = new RestClient();
+                _url = value.EndsWith("/") ? value.Substring(0, value.Length - 1) : value;
             }
         }
         private string _url;
@@ -46,9 +47,16 @@ namespace ChessLib.Http
             {
                 throw new YouAreNotInMatchException();
             }
-            RestRequest request = new RestRequest("api/chess/move", Method.GET);
+            RestRequest request = new RestRequest($"{Url}/api/chess/move", Method.GET);
             request.AddQueryParameter("name", Name);
-            request.AddQueryParameter("matchId", Name);
+            request.AddQueryParameter("matchId", MatchId.Value.ToString());
+            request.AddQueryParameter("from", from.ToString());
+            request.AddQueryParameter("to", to.ToString());
+            if (figure != EnumFigure.None)
+            {
+                request.AddQueryParameter("dest", ((char)figure).ToString());
+            }
+            
             if (figure != EnumFigure.None)
             {
                 request.AddQueryParameter("dist", ((char)figure).ToString());
@@ -63,7 +71,7 @@ namespace ChessLib.Http
         
         public bool CreateMatch(string OponentName)
         {
-            RestRequest request = new RestRequest("api/chess/creatematch");
+            RestRequest request = new RestRequest($"{Url}/api/chess/creatematch");
             request.AddQueryParameter("whiteName", Name);
             request.AddQueryParameter("blackName", OponentName);
             var response = JsonConvert.DeserializeObject<CreateMatchResponse>(_restClient.Execute(request).Content);
@@ -71,7 +79,7 @@ namespace ChessLib.Http
             if (response.Success)
             {
                 MatchId = response.MatchId;
-                MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.White : throw new Exception();
+                MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : throw new Exception();
             }
 
             return response.Success;
@@ -79,20 +87,20 @@ namespace ChessLib.Http
         public bool JoinMatch(int matchId)
         {
             MatchId = matchId;
-            RestRequest request = new RestRequest("api/chess/creatematch");
+            RestRequest request = new RestRequest($"{Url}/api/chess/getallfens");
             request.AddQueryParameter("matchId", MatchId.Value.ToString());
             var response = JsonConvert.DeserializeObject<GetAllFensRespons>(_restClient.Execute(request).Content);
             if (response.Success)
             {
                 Moves = new List<string>(response.Fens);
                 Board = new Board(Moves.Last());
-                MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.White : throw new Exception();
+                MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : throw new Exception();
             }
             return response.Success;
         }
         public string GetLastFen()
         {
-            RestRequest request = new RestRequest("api/creatematch");
+            RestRequest request = new RestRequest($"{Url}/api/chess/getlastfen");
             request.AddQueryParameter("matchId", MatchId.Value.ToString());
             var response = JsonConvert.DeserializeObject<GetLastFenResponse>(_restClient.Execute(request).Content);
             return response.Success ? response.Fen : null;
@@ -109,20 +117,25 @@ namespace ChessLib.Http
         {
             _restClient = new RestClient();
             Timer.Elapsed += Timer_Elapsed;
+            Timer.Start();
         }
+        #endregion
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (MatchId.HasValue)
             {
-                var newFen = GetLastFen();
-                if (newFen != Fen)
+                try
                 {
-                    Moves.Add(newFen);
-                    Board = new Board(newFen);
+                    var newFen = GetLastFen();
+                    if (newFen != Fen)
+                    {
+                        Moves.Add(newFen);
+                        Board = new Board(newFen);
+                    }
                 }
+                catch (Exception) { }
             }
         }
-        #endregion
     }
 }

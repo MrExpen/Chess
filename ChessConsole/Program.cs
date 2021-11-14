@@ -3,6 +3,7 @@ using System.Linq;
 using ChessLib;
 using ChessLib.Http;
 using ChessLib.Figures;
+using System.Threading;
 
 namespace ChessConsole
 {
@@ -24,16 +25,35 @@ namespace ChessConsole
                     }
                     Console.WriteLine();
                 }
+                
+                if (!chess.MyTurn)
+                {
+                    Console.WriteLine("Not your turn.");
+                    while (!chess.MyTurn)
+                    {
+                        Thread.Sleep(400);
+                    }
+                    Console.Clear();
+                    continue;
+                }
                 var move = Console.ReadLine();
                 Console.Clear();
                 bool reslut = false;
-                if (move.Length > 4)
+                try
                 {
-                    reslut = chess.Move(new ChessPosition(move.Substring(0, 2)), new ChessPosition(move.Substring(2, 2)), (EnumFigure)move[4]);
+                    if (move.Length > 4)
+                    {
+                        reslut = chess.Move(new ChessPosition(move.Substring(0, 2)), new ChessPosition(move.Substring(2, 2)), (EnumFigure)move[4]);
+                    }
+                    else
+                    {
+                        reslut = chess.Move(new ChessPosition(move.Substring(0, 2)), new ChessPosition(move.Substring(2, 2)));
+                    }
                 }
-                else
+                catch (ArgumentException)
                 {
-                    reslut = chess.Move(new ChessPosition(move.Substring(0, 2)), new ChessPosition(move.Substring(2, 2)));
+                    Console.WriteLine("Invalid input");
+                    continue;
                 }
                 if (!reslut)
                 {
