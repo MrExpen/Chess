@@ -142,6 +142,7 @@ namespace ChessLib.Http
                     }
                 }
             });
+            UpdateThread.Start();
         }
         public string GetLastFen()
         {
