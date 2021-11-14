@@ -10,10 +10,10 @@ namespace ChessLib
 {
     public class LocalChessEngine : IChessEngine
     {
-        protected Board Board { get; set; }
-        public Color Turn => Board.Turn;
-        public string Fen => Board.Fen;
-        public Color Winner
+        protected virtual Board Board { get; set; }
+        public virtual Color Turn => Board.Turn;
+        public virtual string Fen => Board.Fen;
+        public virtual Color Winner
         {
             get
             {
@@ -24,11 +24,11 @@ namespace ChessLib
                 return Color.None;
             }
         }
-        public bool IsTie => IsStalemate || IsTie1 || IsTie2;
-        public bool InGame => Winner == Color.None && !IsTie;
-        protected bool IsStalemate => !Board.IsChecked(Turn) && Figures.Where(f => f.Color == Turn).All(f => GetMoves(f).Count() == 0);
-        protected bool IsTie1 => Board.HalfmoveClock == 100;
-        protected bool IsTie2 => Moves.GroupBy(m => Regex.Match(m, @"\S+\s\S+").Value).Select(x => x.Count()).Any(x => x >= 3);
+        public virtual bool IsTie => IsStalemate || IsTie1 || IsTie2;
+        public virtual bool InGame => Winner == Color.None && !IsTie;
+        protected virtual bool IsStalemate => !Board.IsChecked(Turn) && Figures.Where(f => f.Color == Turn).All(f => GetMoves(f).Count() == 0);
+        protected virtual bool IsTie1 => Board.HalfmoveClock == 100;
+        protected virtual bool IsTie2 => Moves.GroupBy(m => Regex.Match(m, @"\S+\s\S+").Value).Select(x => x.Count()).Any(x => x >= 3);
 
 
         public List<string> Moves { get; protected set; } = new List<string>();
