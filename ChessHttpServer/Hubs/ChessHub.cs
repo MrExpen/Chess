@@ -27,6 +27,8 @@ namespace ChessHttpServer.Hubs
                 }
                 engine.OnTurnChanged += async (sender, args) =>
                 {
+                    using var db = new ApplicationDbContext();
+                    var Match = await db.ChessMatchs.FindAsync(MatchId);
                     Match.Fens.Add(new FenStringData(args.FenNow));
                     await Clients.Others.SendAsync("Move", MatchId, args);
                     await db.SaveChangesAsync();
@@ -35,5 +37,9 @@ namespace ChessHttpServer.Hubs
             }
         }
 
+        private void Engine_OnTurnChanged(object arg1, TurnChangedEventArgs arg2)
+        {
+            
+        }
     }
 }
