@@ -9,27 +9,74 @@ namespace ChessLib.Engines
     public class LocalChessEngine : IChessEngine
     {
         protected Board Board { get; set; }
-        public virtual Color Turn => Board.Turn;
-        public virtual string Fen => Board.Fen;
+        public virtual Color Turn
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return Board.Turn;
+                }
+            }
+        }
+        public virtual string Fen
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return Board.Fen;
+                }
+            }
+        }
         public virtual Color Winner
         {
             get
             {
-                if (Board.IsChecked(Turn) && Figures.Where(f => f.Color == Turn).All(f => GetMoves(f).Count() == 0))
+                lock (_lock)
                 {
-                    return Turn.Flip();
+                    if (Board.IsChecked(Turn) && Figures.Where(f => f.Color == Turn).All(f => GetMoves(f).Count() == 0))
+                    {
+                        return Turn.Flip();
+                    }
+                    return Color.None;
                 }
-                return Color.None;
             }
         }
 
         #region GameResults
         public virtual bool InGame => Winner == Color.None && !IsTie;
         public virtual bool IsTie => IsStalemate || IsTie1 || IsTie2;
-        protected virtual bool IsStalemate => !Board.IsChecked(Turn) && Figures.Where(f => f.Color == Turn).All(f => GetMoves(f).Count() == 0);
-        protected virtual bool IsTie1 => Board.HalfmoveClock == 100;
-        protected virtual bool IsTie2 => Moves.GroupBy(m => m.Split(" ").Take(2)).Select(x => x.Count()).Any(x => x >= 3);
-
+        protected virtual bool IsStalemate
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return !Board.IsChecked(Turn) && Figures.Where(f => f.Color == Turn).All(f => GetMoves(f).Count() == 0);
+                }
+            }
+        }
+        protected virtual bool IsTie1
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return Board.HalfmoveClock == 100;
+                }
+            }
+        }
+        protected virtual bool IsTie2
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return Moves.GroupBy(m => m.Split(" ").Take(2)).Select(x => x.Count()).Any(x => x >= 3);
+                }
+            }
+        }
         #endregion
 
         public virtual List<string> Moves { get; protected set; }
@@ -43,7 +90,7 @@ namespace ChessLib.Engines
             {
                 lock (_lock)
                 {
-                    return Board.Figures.Cast<ChessFigure>().Where(f => f is not null);
+                    return Board.Figures.Cast<ChessFigure>().Where(f => f is not null).ToArray();
                 }
             }
         }
@@ -66,7 +113,7 @@ namespace ChessLib.Engines
         {
             lock (_lock)
             {
-                return GetFigure(x, y)?.GetMovePositionsWithCheckCheck(Board) ?? new List<ChessPosition>();
+                return GetFigure(x, y)?.GetMovePositionsWithCheckCheck(Board)?.ToArray() ?? Array.Empty<ChessPosition>();
             }
         }
 
