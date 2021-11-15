@@ -31,7 +31,14 @@ namespace ChessSFML
         static Program()
         {
             _window = new RenderWindow(new VideoMode(800, 800), "Chess by MrExpen", Styles.Close | Styles.Titlebar);
-            _window.Closed += (s, e) => _window.Close();
+            _window.Closed += (s, e) =>
+            {
+                if (_chess is IDisposable disposable)
+                {
+                    disposable?.Dispose();
+                }
+                _window.Close();
+            };
             _window.MouseButtonReleased += _window_MouseButtonReleased;
             _window.KeyPressed += _window_KeyPressed;
             _window.TextEntered += _window_TextEntered;

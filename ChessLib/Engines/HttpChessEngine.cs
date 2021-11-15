@@ -14,6 +14,7 @@ namespace ChessLib.Engines
     [Obsolete("Unstable")]
     public class HttpChessEngine : LocalChessEngine, IChessEngine, IDisposable
     {
+        private object _lock = new object();
         private RestClient _restClient { get; set; }
         public string Name { get; set; }
         public int? MatchId { get; private set; }
@@ -29,7 +30,17 @@ namespace ChessLib.Engines
             }
         }
         private string _url;
-        private Timer Timer { get; set; } = new Timer(1000);
+        private Timer Timer { get; set; }
+        protected override bool IsTie2
+        {
+            get
+            {
+                lock (_lock)
+                {
+                     return base.IsTie2;
+                }
+            }
+        }
 
         public override IEnumerable<ChessPosition> GetMoves(int x, int y)
         {
@@ -68,7 +79,10 @@ namespace ChessLib.Engines
             } while (response is null);
             if (response.Success)
             {
-                base.Move(from, to, figure);
+                lock (_lock)
+                {
+                    base.Move(from, to, figure);
+                }
                 if (!InGame)
                 {
                     Timer.Stop();
@@ -107,12 +121,15 @@ namespace ChessLib.Engines
             } while (response is null);
             if (response.Success)
             {
-                Moves = new List<string>(response.Fens);
-                Board = new Board(Moves.Last());
-                MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : Color.None;
-                if (!MyTurn || MyColor == Color.None)
+                lock (_lock)
                 {
-                    Timer.Start();
+                    Moves = new List<string>(response.Fens);
+                    Board = new Board(Moves.Last());
+                    MyColor = MyColor = Name == response.WhiteName ? Color.White : Name == response.BlackName ? Color.Black : Color.None;
+                    if (!MyTurn || MyColor == Color.None)
+                    {
+                        Timer.Start();
+                    }
                 }
             }
             return response.Success;
@@ -135,6 +152,7 @@ namespace ChessLib.Engines
         private HttpChessEngine()
         {
             _restClient = new RestClient();
+            Timer = new Timer(1500);
             Timer.Elapsed += Timer_Elapsed;
         }
         #endregion
@@ -148,8 +166,11 @@ namespace ChessLib.Engines
                     var newFen = GetLastFen();
                     if (newFen != Fen)
                     {
-                        Moves.Add(newFen);
-                        Board = new Board(newFen);
+                        lock ( _lock)
+                        {
+                            Moves.Add(newFen);
+                            Board = new Board(newFen);
+                        }
                     }
                     if (MyTurn)
                     {
