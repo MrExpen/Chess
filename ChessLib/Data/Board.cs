@@ -1,12 +1,10 @@
-﻿using ChessLib.Figures;
+﻿using ChessLib.Exceptions;
+using ChessLib.Figures;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ChessLib.Exceptions;
-using System.Text.RegularExpressions;
 
-namespace ChessLib
+namespace ChessLib.Data
 {
     public class Board
     {
@@ -47,7 +45,7 @@ namespace ChessLib
         }
         public Color Turn { get; private set; }
         public int HalfmoveClock { get; set; } = 0;
-        public int FullmoveNumber { get;private set; } = 0;
+        public int FullmoveNumber { get; private set; } = 0;
         public string Fen { get; private set; }
 
         public bool WhiteLongCastling { get; set; } = false;
@@ -55,21 +53,22 @@ namespace ChessLib
         public bool BlackLongCastling { get; set; } = false;
         public bool BlackShortCastling { get; set; } = false;
 
-        public bool Move(ChessPosition from, ChessPosition to, EnumFigure figure=EnumFigure.None)
+        public (bool Success, bool IsEat) Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.None)
         {
             if (Figures[from.X, from.Y] is null)
             {
-                return false;
+                return (false, false);
             }
             try
             {
-                return Move(Figures[from.X, from.Y].Move(to, this));
+                var move = Figures[from.X, from.Y].Move(to, this);
+                return (Move(move), move.Eat is not null);
             }
             catch (CannotMoveException)
             {
-                return false;
+                return (false, false);
             }
-            
+
         }
         public bool Move(ChessMove chessMove)
         {
@@ -95,7 +94,7 @@ namespace ChessLib
                     {
                         WhiteShortCastling = false;
                     }
-                    else if (chessMove.To.Position == new ChessPosition(0,7))
+                    else if (chessMove.To.Position == new ChessPosition(0, 7))
                     {
                         BlackLongCastling = false;
                     }
@@ -241,7 +240,7 @@ namespace ChessLib
         }
 
         #region Ctor
-        public Board(string fen= "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        public Board(string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         {
             Fen = fen;
             int y = 7;

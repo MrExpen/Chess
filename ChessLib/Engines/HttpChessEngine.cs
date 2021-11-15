@@ -9,9 +9,11 @@ using Newtonsoft.Json;
 using ChessLib.Http.Responses;
 using ChessLib.Exceptions;
 using System.Timers;
+using ChessLib.Data;
 
-namespace ChessLib.Http
+namespace ChessLib.Engines
 {
+    [Obsolete("Unstable")]
     public class HttpChessEngine : LocalChessEngine, IChessEngine, IDisposable
     {
         private RestClient _restClient { get; set; }

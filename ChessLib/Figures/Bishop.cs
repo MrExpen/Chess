@@ -1,8 +1,5 @@
-﻿using System;
+﻿using ChessLib.Data;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChessLib.Figures
 {
@@ -10,15 +7,13 @@ namespace ChessLib.Figures
     {
         public override EnumFigure EnumFigure => EnumFigure.Bishop;
 
-        public override char Char => Color == Color.White ? 'B' : 'b';
-
         public override List<ChessPosition> GetMovePositions(Board board)
         {
             List<ChessPosition> chessPositions = new List<ChessPosition>();
 
             for (int i = 1; (Position + new ChessPosition(i, i)).IsOnBoard; i++)
             {
-                if (board.Figures[Position.X + i, Position.Y + i] is null )
+                if (board.Figures[Position.X + i, Position.Y + i] is null)
                 {
                     chessPositions.Add(new ChessPosition(Position.X + i, Position.Y + i));
                 }
@@ -33,7 +28,7 @@ namespace ChessLib.Figures
             }
             for (int i = 1; (Position + new ChessPosition(i, -i)).IsOnBoard; i++)
             {
-                if (board.Figures[Position.X + i, Position.Y - i] is null )
+                if (board.Figures[Position.X + i, Position.Y - i] is null)
                 {
                     chessPositions.Add(new ChessPosition(Position.X + i, Position.Y - i));
                 }

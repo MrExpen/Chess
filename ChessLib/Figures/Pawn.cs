@@ -5,14 +5,13 @@ using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading.Tasks;
 using ChessLib.Exceptions;
+using ChessLib.Data;
 
 namespace ChessLib.Figures
 {
     public class Pawn : ChessFigure
     {
         public override EnumFigure EnumFigure => EnumFigure.Pawn;
-
-        public override char Char => Color == Color.White ? 'P' : 'p';
 
         public override List<ChessPosition> GetMovePositions(Board board)
         {
@@ -36,10 +35,10 @@ namespace ChessLib.Figures
                     movePositions.Add(new ChessPosition(Position.X - 1, Position.Y + 1));
                 }
 
-                Match Match = Regex.Match(board.Fen, @"(?<PawnPosition>\w\d) \d+ \d+$");
-                if (Match.Success)
+                var tmp = board.Fen.Split(" ")[^3];
+                if (tmp != "-")
                 {
-                    ChessPosition PawnPosition = new ChessPosition(Match.Groups["PawnPosition"].Value);
+                    ChessPosition PawnPosition = new ChessPosition(tmp);
                     if (Position.Y == 4 && Math.Abs(Position.X - PawnPosition.X) == 1)
                     {
                         movePositions.Add(PawnPosition);
@@ -56,19 +55,19 @@ namespace ChessLib.Figures
                 {
                     movePositions.Add(new ChessPosition(Position.X, Position.Y - 2));
                 }
-                if (new ChessPosition(Position.X + 1, Position.Y - 1).IsOnBoard && board.Figures[Position.X + 1, Position.Y - 1] is not null)
+                if (new ChessPosition(Position.X + 1, Position.Y - 1).IsOnBoard && board.Figures[Position.X + 1, Position.Y - 1] is not null && board.Figures[Position.X + 1, Position.Y - 1].Color != Color)
                 {
                     movePositions.Add(new ChessPosition(Position.X + 1, Position.Y - 1));
                 }
-                if (new ChessPosition(Position.X - 1, Position.Y - 1).IsOnBoard && board.Figures[Position.X - 1, Position.Y - 1] is not null)
+                if (new ChessPosition(Position.X - 1, Position.Y - 1).IsOnBoard && board.Figures[Position.X - 1, Position.Y - 1] is not null && board.Figures[Position.X - 1, Position.Y - 1].Color != Color)
                 {
                     movePositions.Add(new ChessPosition(Position.X - 1, Position.Y - 1));
                 }
 
-                Match Match = Regex.Match(board.Fen, @"(?<PawnPosition>\w\d) \d+ \d+$");
-                if (Match.Success)
+                var tmp = board.Fen.Split(" ")[^3];
+                if (tmp != "-")
                 {
-                    ChessPosition PawnPosition = new ChessPosition(Match.Groups["PawnPosition"].Value);
+                    ChessPosition PawnPosition = new ChessPosition(tmp);
                     if (Position.Y == 3 && Math.Abs(Position.X - PawnPosition.X) == 1)
                     {
                         movePositions.Add(PawnPosition);

@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ChessLib.Data;
+using System;
+using System.Drawing;
 
 namespace ChessLib.Figures
 {
     public static class FigureCreater
     {
-        public static ChessFigure CreateFigure(EnumFigure enumFigure, Color color, ChessPosition position)
+        public static ChessFigure CreateFigure(EnumFigure enumFigure, Data.Color color, ChessPosition position)
         {
             switch (enumFigure)
             {

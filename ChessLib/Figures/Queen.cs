@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChessLib.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,8 +10,6 @@ namespace ChessLib.Figures
     public class Queen : ChessFigure
     {
         public override EnumFigure EnumFigure => EnumFigure.Queen;
-
-        public override char Char => Color == Color.White ? 'Q' : 'q';
 
         public override List<ChessPosition> GetMovePositions(Board board)
         {

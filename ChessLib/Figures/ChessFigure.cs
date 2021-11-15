@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChessLib.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,7 @@ namespace ChessLib.Figures
         public ChessPosition Position { get; private set; }
         public Color Color { get; private set; }
         public abstract EnumFigure EnumFigure { get; }
+        public virtual char Char => Color == Color.White ? char.ToUpper((char)EnumFigure) : Color == Color.Black ? char.ToLower((char)EnumFigure) : throw new ArgumentException();
 
         public virtual ChessMove Move(ChessPosition to, Board board, EnumFigure figure=EnumFigure.None)
         {
@@ -20,9 +22,6 @@ namespace ChessLib.Figures
             }
             throw new Exceptions.CannotMoveException();
         }
-        public virtual List<ChessPosition> GetMovePositionsWithCheckCheck(Board board)
-            => RemoveChecks(GetMovePositions(board), board);
-        public abstract List<ChessPosition> GetMovePositions(Board board);
         protected List<ChessPosition> RemoveChecks(List<ChessPosition> move, Board board)
         {
             List<ChessPosition> chessPositions = new List<ChessPosition>();
@@ -38,22 +37,9 @@ namespace ChessLib.Figures
 
             return chessPositions;
         }
-        protected List<ChessPosition> RemoveSelfEat(List<ChessPosition> move, Board board)
-        {
-            List<ChessPosition> chessPositions = new List<ChessPosition>();
-
-            foreach (ChessPosition movePosition in move)
-            {
-                if (board.Figures[movePosition.X, movePosition.Y] is null || board.Figures[movePosition.X, movePosition.Y].Color != Color)
-                {
-                    chessPositions.Add(movePosition);
-                }
-            }
-
-            return chessPositions;
-        }
-
-        public abstract char Char { get; }
+        public virtual List<ChessPosition> GetMovePositionsWithCheckCheck(Board board)
+            => RemoveChecks(GetMovePositions(board), board);
+        public abstract List<ChessPosition> GetMovePositions(Board board);
 
         #region EqualsOverride
         public override string ToString()
