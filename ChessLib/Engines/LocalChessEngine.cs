@@ -122,6 +122,8 @@ namespace ChessLib.Engines
             => Move(from, to, (col) => figure);
         public virtual bool Move(ChessPosition from, ChessPosition to, Func<Color, EnumFigure> func)
         {
+            if (GetFigure(from)?.Color != Turn)
+                return false;
             (bool Success, bool IsEat, EnumFigure BocomeTo) result;
             lock (_lock)
             {
@@ -131,7 +133,10 @@ namespace ChessLib.Engines
                     Moves.Add(Board.Fen);
                 }
             }
-            OnTurnChanged?.Invoke(this, new TurnChangedEventArgs { IsEat = result.IsEat, From = from, To = to, TurnNow = Turn, IsChecked = Board.IsChecked(Turn), BecomeTo = result.BocomeTo, FenNow = Fen });
+            if (result.Success)
+            {
+                OnTurnChanged?.Invoke(this, new TurnChangedEventArgs { IsEat = result.IsEat, From = from, To = to, TurnNow = Turn, IsChecked = Board.IsChecked(Turn), BecomeTo = result.BocomeTo, FenNow = Fen });
+            }
             return result.Success;
         }
 

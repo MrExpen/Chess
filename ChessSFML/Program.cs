@@ -7,6 +7,7 @@ using System.Linq;
 using ChessLib.Engines;
 using ChessLib.Utils;
 using ChessLib.Data;
+using SFML.Audio;
 
 namespace ChessSFML
 {
@@ -16,6 +17,8 @@ namespace ChessSFML
         private static readonly RenderWindow _window;
         private static readonly RenderTexture _chessBoardTexture;
         private static readonly CircleShape _canMuveTo;
+        private static readonly SoundBuffer _hrumSound, _checkSound, _turnSound;
+        private static readonly Sound _sound;
         private static readonly Sprite _chessBoardSprite;
         private static readonly RectangleShape _buttonExit, _buttonLocalMatch, _buttonOnlineMatch, _buttonJoinMenu, _buttonCreateMenu, _buttonJoin, _buttonCreate;
         private static readonly RenderTexture _pauseMenuTexture, _newOnlineMenuTexture, _createOnlineMenuTexture, _joinOnlineMenuTexture, _resultsMenuTexture;
@@ -45,6 +48,11 @@ namespace ChessSFML
             _window.TextEntered += _window_TextEntered;
 
             _gameState = GameState.InPause;
+
+            _sound = new Sound();
+            _hrumSound = new SoundBuffer(@".\Resouces\hrum.ogg");
+            _checkSound = new SoundBuffer(@".\Resouces\check.ogg");
+            _turnSound = new SoundBuffer(@".\Resouces\turn.ogg");
 
             RectangleShape White = new RectangleShape(new Vector2f(_CELL_LENGTH, _CELL_LENGTH))
             {
@@ -550,7 +558,19 @@ namespace ChessSFML
 
         private static void _chess_OnTurnChanged(object sender, TurnChangedEventArgs e)
         {
-
+            if (e.IsChecked)
+            {
+                _sound.SoundBuffer = _checkSound;
+            }
+            else if (e.IsEat)
+            {
+                _sound.SoundBuffer = _hrumSound;
+            }
+            else
+            {
+                _sound.SoundBuffer = _turnSound;
+            }
+            _sound.Play();
         }
     }
 }
