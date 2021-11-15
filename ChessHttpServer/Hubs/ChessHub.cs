@@ -12,31 +12,26 @@ namespace ChessHttpServer.Hubs
     {
         public async Task Move(int MatchId, string Name, string from, string to, string figure)
         {
-            using (var db = new ApplicationDbContext())
+            using var db = new ApplicationDbContext();
+            var Match = await db.ChessMatchs.FindAsync(MatchId);
+            if (Match is null)
             {
-                Task IsCompite = Task.Delay(10000);
-                var Match = await db.ChessMatchs.FindAsync(MatchId);
-                if (Match is null)
-                {
-                    return;
-                }
+                return;
+            }
 
-                var engine = new LocalChessEngine(Match.Fens.Select(x => x.Data));
-                if (!((Match.WhiteName == Name && engine.Turn == Color.White) || (Match.BlackName == Name && engine.Turn == Color.Black)))
-                {
-                    return;
-                }
-                engine.OnTurnChanged += async (sender, args) =>
-                {
-                    using var db = new ApplicationDbContext();
-                    var Match = await db.ChessMatchs.FindAsync(MatchId);
-                    Match.Fens.Add(new FenStringData(args.FenNow));
-                    await Clients.Others.SendAsync("Move", MatchId, args);
-                    await db.SaveChangesAsync();
-                    IsCompite = Task.CompletedTask;
-                };
-                engine.Move(new ChessPosition(from), new ChessPosition(to), figure.Length > 0 ? (EnumFigure)figure[0] : EnumFigure.None);
-                await IsCompite;
+            var engine = new LocalChessEngine(Match.Fens.Select(x => x.Data));
+            if (!((Match.WhiteName == Name && engine.Turn == Color.White) || (Match.BlackName == Name && engine.Turn == Color.Black)))
+            {
+                return;
+            }
+
+            if (engine.Move(new ChessPosition(from), new ChessPosition(to), figure.Length > 0 ? (EnumFigure)figure[0] : EnumFigure.None))
+            {
+                Match.Fens.Add(new FenStringData(engine.Fen));
+                await Task.WhenAll(
+                    db.SaveChangesAsync(),
+                    Clients.Others.SendAsync("Move", MatchId, from, to, figure)
+                );
             }
         }
     }

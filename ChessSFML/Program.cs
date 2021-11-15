@@ -39,6 +39,7 @@ namespace ChessSFML
                 }
                 _window.Close();
             };
+            _window.SetVerticalSyncEnabled(true);
             _window.MouseButtonReleased += _window_MouseButtonReleased;
             _window.KeyPressed += _window_KeyPressed;
             _window.TextEntered += _window_TextEntered;
