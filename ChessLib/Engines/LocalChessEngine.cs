@@ -38,27 +38,47 @@ namespace ChessLib.Engines
         public virtual event Action<object, TurnChangedEventArgs> OnTurnChanged;
 
         public virtual IEnumerable<ChessFigure> Figures
-            => Board.Figures.Cast<ChessFigure>().Where(f => f is not null);
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return Board.Figures.Cast<ChessFigure>().Where(f => f is not null);
+                }
+            }
+        }
 
         public virtual ChessFigure GetFigure(ChessPosition chessPosition)
             => GetFigure(chessPosition.X, chessPosition.Y);
         public virtual ChessFigure GetFigure(int x, int y)
-            => Board.Figures[x, y];
+        {
+            lock (_lock)
+            {
+                return Board.Figures[x, y];
+            }
+        }
 
         public virtual IEnumerable<ChessPosition> GetMoves(ChessFigure chessFigure)
             => GetMoves(chessFigure.Position);
         public virtual IEnumerable<ChessPosition> GetMoves(ChessPosition chessPosition)
             => GetMoves(chessPosition.X, chessPosition.Y);
         public virtual IEnumerable<ChessPosition> GetMoves(int x, int y)
-            => GetFigure(x, y)?.GetMovePositionsWithCheckCheck(Board) ?? new List<ChessPosition>();
+        {
+            lock (_lock)
+            {
+                return GetFigure(x, y)?.GetMovePositionsWithCheckCheck(Board) ?? new List<ChessPosition>();
+            }
+        }
 
 
         public virtual bool Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.None)
+            => Move(from, to, (col) => figure);
+        public virtual bool Move(ChessPosition from, ChessPosition to, Func<Color, EnumFigure> func)
         {
             (bool Success, bool IsEat) result;
             lock (_lock)
             {
-                result = Board.Move(from, to, figure);
+                result = Board.Move(from, to, func);
                 if (result.Success)
                 {
                     Moves.Add(Board.Fen);
@@ -67,8 +87,7 @@ namespace ChessLib.Engines
             OnTurnChanged?.Invoke(this, new TurnChangedEventArgs { IsEat = result.IsEat, From = from, To = to, TurnNow = Turn, IsChecked = Board.IsChecked(Turn) });
             return result.Success;
         }
-        public virtual bool Move(ChessPosition from, ChessPosition to, Func<EnumFigure> func)
-            => Move(from, to, func());
+            
 
         #region Ctor
         public LocalChessEngine(string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")

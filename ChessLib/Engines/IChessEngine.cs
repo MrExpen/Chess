@@ -23,7 +23,7 @@ namespace ChessLib.Engines
         IEnumerable<ChessPosition> GetMoves(int x, int y);
 
         bool Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.None);
-        bool Move(ChessPosition from, ChessPosition to, Func<EnumFigure> func);
+        bool Move(ChessPosition from, ChessPosition to, Func<Color, EnumFigure> func);
 
         event Action<object, TurnChangedEventArgs> OnTurnChanged;
     }

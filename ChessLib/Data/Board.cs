@@ -53,7 +53,7 @@ namespace ChessLib.Data
         public bool BlackLongCastling { get; set; } = false;
         public bool BlackShortCastling { get; set; } = false;
 
-        public (bool Success, bool IsEat) Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.None)
+        public (bool Success, bool IsEat) Move(ChessPosition from, ChessPosition to, Func<Color, EnumFigure> func)
         {
             if (Figures[from.X, from.Y] is null)
             {
@@ -61,7 +61,7 @@ namespace ChessLib.Data
             }
             try
             {
-                var move = Figures[from.X, from.Y].Move(to, this);
+                var move = Figures[from.X, from.Y].Move(to, this, func);
                 return (Move(move), move.Eat is not null);
             }
             catch (CannotMoveException)

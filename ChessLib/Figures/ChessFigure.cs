@@ -14,11 +14,11 @@ namespace ChessLib.Figures
         public abstract EnumFigure EnumFigure { get; }
         public virtual char Char => Color == Color.White ? char.ToUpper((char)EnumFigure) : Color == Color.Black ? char.ToLower((char)EnumFigure) : throw new ArgumentException();
 
-        public virtual ChessMove Move(ChessPosition to, Board board, EnumFigure figure=EnumFigure.None)
+        public virtual ChessMove Move(ChessPosition to, Board board, Func<Color, EnumFigure> func)
         {
             if (GetMovePositionsWithCheckCheck(board).Contains(to))
             {
-                return new ChessMove(this, FigureCreater.CreateFigure(figure == EnumFigure.None ? EnumFigure : figure, Color, to), board.Figures[to.X, to.Y]);
+                return new ChessMove(this, FigureCreater.CreateFigure(EnumFigure, Color, to), board.Figures[to.X, to.Y]);
             }
             throw new Exceptions.CannotMoveException();
         }

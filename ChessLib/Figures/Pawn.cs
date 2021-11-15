@@ -77,7 +77,7 @@ namespace ChessLib.Figures
             return movePositions;
         }
 
-        public override ChessMove Move(ChessPosition to, Board board, EnumFigure figure=EnumFigure.None)
+        public override ChessMove Move(ChessPosition to, Board board, Func<Color, EnumFigure> func)
         {
             if (GetMovePositionsWithCheckCheck(board).Contains(to))
             {
@@ -92,7 +92,7 @@ namespace ChessLib.Figures
                         return new ChessMove(this, FigureCreater.CreateFigure(EnumFigure, Color, to), board.Figures[to.X, to.Y + 1]);
                     }
                 }
-                return new ChessMove(this, FigureCreater.CreateFigure(((to.Y % 7 == 0) && figure == EnumFigure.None) ? EnumFigure.Queen : (figure == EnumFigure.None) ? EnumFigure : throw new ArgumentException(), Color, to), board.Figures[to.X, to.Y]);
+                return new ChessMove(this, FigureCreater.CreateFigure((to.Y % 7 == 0) ? func(Color) : EnumFigure, Color, to), board.Figures[to.X, to.Y]);
             }
             throw new CannotMoveException();
         }
