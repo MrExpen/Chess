@@ -1,3 +1,5 @@
+using ChessHttpServer.Controllers;
+using ChessHttpServer.Data;
 using ChessHttpServer.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,6 +30,10 @@ namespace ChessHttpServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSignalR();
+            services.AddSingleton<ChessHub>();
+            services.AddTransient<ChessHub>();
+            services.AddSingleton<ChessController>();
+            services.AddTransient<ChessController>();
             services.AddControllers()
                 .AddNewtonsoftJson();
             services.AddSwaggerGen(c =>
