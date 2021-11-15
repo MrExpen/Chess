@@ -10,8 +10,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ChessSignalRClient\ChessSignalRClient.csproj" />
     <ProjectReference Include="..\ChessLib\ChessLib.csproj" />
+    <ProjectReference Include="..\ChessSignalRClient\ChessSignalRClient.csproj" />
   </ItemGroup>
 
   <ItemGroup>
