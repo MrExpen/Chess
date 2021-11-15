@@ -14,6 +14,7 @@ namespace ChessHttpServer.Hubs
         {
             using (var db = new ApplicationDbContext())
             {
+                Task IsCompite = Task.Delay(10000);
                 var Match = await db.ChessMatchs.FindAsync(MatchId);
                 if (Match is null)
                 {
@@ -32,14 +33,11 @@ namespace ChessHttpServer.Hubs
                     Match.Fens.Add(new FenStringData(args.FenNow));
                     await Clients.Others.SendAsync("Move", MatchId, args);
                     await db.SaveChangesAsync();
+                    IsCompite = Task.CompletedTask;
                 };
                 engine.Move(new ChessPosition(from), new ChessPosition(to), figure.Length > 0 ? (EnumFigure)figure[0] : EnumFigure.None);
+                await IsCompite;
             }
-        }
-
-        private void Engine_OnTurnChanged(object arg1, TurnChangedEventArgs arg2)
-        {
-            
         }
     }
 }
