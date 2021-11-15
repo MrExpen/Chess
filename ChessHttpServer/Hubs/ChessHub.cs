@@ -29,6 +29,7 @@ namespace ChessHttpServer.Hubs
                 {
                     Match.Fens.Add(new FenStringData(args.FenNow));
                     await Clients.Others.SendAsync("Move", MatchId, args);
+                    await db.SaveChangesAsync();
                 };
                 engine.Move(new ChessPosition(from), new ChessPosition(to), figure.Length > 0 ? (EnumFigure)figure[0] : EnumFigure.None);
             }
