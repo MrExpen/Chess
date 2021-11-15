@@ -80,7 +80,7 @@ namespace ChessLib.Engines
         #endregion
 
         public virtual List<string> Moves { get; protected set; }
-        public object _lock = new object();
+        protected object _lock = new object();
 
         public virtual event Action<object, TurnChangedEventArgs> OnTurnChanged;
 
@@ -122,7 +122,7 @@ namespace ChessLib.Engines
             => Move(from, to, (col) => figure);
         public virtual bool Move(ChessPosition from, ChessPosition to, Func<Color, EnumFigure> func)
         {
-            (bool Success, bool IsEat) result;
+            (bool Success, bool IsEat, EnumFigure BocomeTo) result;
             lock (_lock)
             {
                 result = Board.Move(from, to, func);
@@ -131,10 +131,10 @@ namespace ChessLib.Engines
                     Moves.Add(Board.Fen);
                 }
             }
-            OnTurnChanged?.Invoke(this, new TurnChangedEventArgs { IsEat = result.IsEat, From = from, To = to, TurnNow = Turn, IsChecked = Board.IsChecked(Turn) });
+            OnTurnChanged?.Invoke(this, new TurnChangedEventArgs { IsEat = result.IsEat, From = from, To = to, TurnNow = Turn, IsChecked = Board.IsChecked(Turn), BecomeTo = result.BocomeTo, FenNow = Fen });
             return result.Success;
         }
-            
+
         #region Ctor
         public LocalChessEngine(string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         {

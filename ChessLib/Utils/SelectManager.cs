@@ -22,7 +22,22 @@ namespace ChessLib.Utils
                     var figure = _chessEngine.GetFigure(Selected.Value);
                     if (figure is not null && figure.Color == _chessEngine.Turn)
                     {
-                        MovesForSelected = _chessEngine.GetMoves(figure);
+                        if (_chessEngine is IOnlineChess onlineChess)
+                        {
+                            if (onlineChess.MyTurn)
+                            {
+                                MovesForSelected = _chessEngine.GetMoves(figure);
+                            }
+                            else
+                            {
+                                MovesForSelected = Array.Empty<ChessPosition>();
+                            }
+                        }
+                        else
+                        {
+                            MovesForSelected = _chessEngine.GetMoves(figure);
+                        }
+                        
                     }
                 }
                 else

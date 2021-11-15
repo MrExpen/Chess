@@ -1,6 +1,5 @@
 ﻿using System;
 using ChessLib;
-using ChessLib.Http;
 using SFML.Graphics;
 using SFML.Window;
 using SFML.System;
@@ -23,6 +22,7 @@ namespace ChessSFML
         private static readonly Sprite _pauseMenuSprite, _newOnlineMenuSprite, _createOnlineMenuSprite, _joinOnlineMenuSprite, _resultsMenuSprite;
         private static readonly Font _font = new Font(@".\Resouces\Roboto-Bold.ttf");
         private static Text _textName, _textMatchId, _textWhiteName, _textBlackName, _textResult;
+        private static readonly string _url = "https://chess.mrexpen.ru:4432";
         private static Text SelectedText { get; set; }
         private static SkinProvider _skinProvider;
         private static IChessEngine _chess;
@@ -39,6 +39,7 @@ namespace ChessSFML
                 }
                 _window.Close();
             };
+            _window.SetVerticalSyncEnabled(true);
             _window.MouseButtonReleased += _window_MouseButtonReleased;
             _window.KeyPressed += _window_KeyPressed;
             _window.TextEntered += _window_TextEntered;
@@ -500,10 +501,7 @@ namespace ChessSFML
                             {
                                 disposable?.Dispose();
                             }
-                            var chess = new HttpChessEngine(_textName.DisplayedString, "https://chess.mrexpen.ru:4432");
-
-                            var MatchId = chess.CreateMatch(_textWhiteName.DisplayedString, _textBlackName.DisplayedString);
-                            //TODO: checks
+                            var MatchId = HttpApi.CreateMatch(_url, _textWhiteName.DisplayedString, _textBlackName.DisplayedString);
                             _textMatchId.DisplayedString = MatchId.ToString();
                             _gameState = GameState.JoinOnline;
                         }
@@ -526,7 +524,7 @@ namespace ChessSFML
                             {
                                 disposable?.Dispose();
                             }
-                            var chess = new HttpChessEngine(_textName.DisplayedString, "https://chess.mrexpen.ru:4432");
+                            var chess = new SignalRChessEngine(_textName.DisplayedString, _url);
 
                             //TODO: checks
                             chess.JoinMatch(int.Parse(_textMatchId.DisplayedString));

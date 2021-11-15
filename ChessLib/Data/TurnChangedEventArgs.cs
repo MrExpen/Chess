@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChessLib.Figures;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,5 +14,7 @@ namespace ChessLib.Data
         public Color TurnNow { get; set; }
         public ChessPosition From { get; set; }
         public ChessPosition To { get; set; }
+        public EnumFigure BecomeTo { get; set; }
+        public string FenNow { get; set; }
     }
 }
