@@ -73,7 +73,7 @@ namespace ChessLib.Engines
             {
                 lock (_lock)
                 {
-                    return Moves.GroupBy(m => m.Split(" ").Take(2)).Select(x => x.Count()).Any(x => x >= 3);
+                    return Moves.GroupBy(m => string.Concat(m.Split(" ").Take(2))).Select(x => x.Count()).Any(x => x >= 3);
                 }
             }
         }
