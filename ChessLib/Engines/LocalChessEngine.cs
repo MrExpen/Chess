@@ -71,7 +71,7 @@ namespace ChessLib.Engines
         }
 
 
-        public virtual bool Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.None)
+        public virtual bool Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.Queen)
             => Move(from, to, (col) => figure);
         public virtual bool Move(ChessPosition from, ChessPosition to, Func<Color, EnumFigure> func)
         {
@@ -88,7 +88,6 @@ namespace ChessLib.Engines
             return result.Success;
         }
             
-
         #region Ctor
         public LocalChessEngine(string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         {
