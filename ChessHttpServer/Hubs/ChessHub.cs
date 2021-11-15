@@ -10,7 +10,7 @@ namespace ChessHttpServer.Hubs
 {
     public class ChessHub : Hub
     {
-        public async Task Move(int MatchId, string from, string to, string figure)
+        public async Task Move(int MatchId, string Name, string from, string to, string figure)
         {
             using (var db = new ApplicationDbContext())
             {
@@ -21,6 +21,10 @@ namespace ChessHttpServer.Hubs
                 }
                     
                 var engine = new LocalChessEngine(Match.Fens.Select(x => x.Data));
+                if (!((Match.WhiteName == Name && engine.Turn == Color.White) || (Match.BlackName == Name && engine.Turn == Color.Black)))
+                {
+                    return;
+                }
                 engine.OnTurnChanged += async (sender, args) =>
                 {
                     Match.Fens.Add(new FenStringData(args.FenNow));

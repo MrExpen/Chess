@@ -14,7 +14,6 @@ namespace ChessLib.Engines
     [Obsolete("Unstable")]
     public class HttpChessEngine : LocalChessEngine, IChessEngine, IDisposable
     {
-        private object _lock = new object();
         private RestClient _restClient { get; set; }
         public string Name { get; set; }
         public int? MatchId { get; private set; }
