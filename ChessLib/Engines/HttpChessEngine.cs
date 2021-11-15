@@ -1,24 +1,24 @@
-﻿using ChessLib.Figures;
+﻿using ChessLib.Data;
+using ChessLib.Exceptions;
+using ChessLib.Figures;
+using ChessLib.Http.Responses;
+using Newtonsoft.Json;
+using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using RestSharp;
-using Newtonsoft.Json;
-using ChessLib.Http.Responses;
-using ChessLib.Exceptions;
 using System.Timers;
 
-namespace ChessLib.Http
+namespace ChessLib.Engines
 {
+    [Obsolete("Unstable")]
     public class HttpChessEngine : LocalChessEngine, IChessEngine, IDisposable
     {
         private RestClient _restClient { get; set; }
         public string Name { get; set; }
         public int? MatchId { get; private set; }
         public Color? MyColor { get; private set; }
-        public bool MyTurn 
+        public bool MyTurn
             => MatchId.HasValue ? MyColor.Value == Turn : throw new YouAreNotInMatchException();
         public string Url
         {
@@ -39,7 +39,7 @@ namespace ChessLib.Http
         {
             return MatchId.HasValue ? base.GetFigure(x, y) : throw new YouAreNotInMatchException();
         }
-        public override IEnumerable<ChessFigure> Figures 
+        public override IEnumerable<ChessFigure> Figures
             => MatchId.HasValue ? base.Figures : throw new YouAreNotInMatchException();
         public override bool Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.None)
         {
@@ -56,7 +56,7 @@ namespace ChessLib.Http
             {
                 request.AddQueryParameter("dest", ((char)figure).ToString());
             }
-            
+
             if (figure != EnumFigure.None)
             {
                 request.AddQueryParameter("dist", ((char)figure).ToString());
@@ -80,7 +80,7 @@ namespace ChessLib.Http
             }
             return response.Success;
         }
-        
+
         public int? CreateMatch(string White, string Black)
         {
             RestRequest request = new RestRequest($"{Url}/api/chess/creatematch");
@@ -130,7 +130,7 @@ namespace ChessLib.Http
         {
             Name = name;
             Url = url;
-            
+
         }
         private HttpChessEngine()
         {

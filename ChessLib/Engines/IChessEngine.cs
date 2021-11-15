@@ -1,11 +1,9 @@
-﻿using ChessLib.Figures;
+﻿using ChessLib.Data;
+using ChessLib.Figures;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ChessLib
+namespace ChessLib.Engines
 {
     public interface IChessEngine
     {
@@ -24,6 +22,9 @@ namespace ChessLib
         IEnumerable<ChessPosition> GetMoves(ChessPosition chessPosition);
         IEnumerable<ChessPosition> GetMoves(int x, int y);
 
-        bool Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.None);
+        bool Move(ChessPosition from, ChessPosition to, EnumFigure figure = EnumFigure.Queen);
+        bool Move(ChessPosition from, ChessPosition to, Func<Color, EnumFigure> func);
+
+        event Action<object, TurnChangedEventArgs> OnTurnChanged;
     }
 }

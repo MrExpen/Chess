@@ -5,7 +5,9 @@ using SFML.Graphics;
 using SFML.Window;
 using SFML.System;
 using System.Linq;
-
+using ChessLib.Engines;
+using ChessLib.Utils;
+using ChessLib.Data;
 
 namespace ChessSFML
 {
@@ -23,7 +25,8 @@ namespace ChessSFML
         private static Text _textName, _textMatchId, _textWhiteName, _textBlackName, _textResult;
         private static Text SelectedText { get; set; }
         private static SkinProvider _skinProvider;
-        private static IChessWithSelect _chess;
+        private static IChessEngine _chess;
+        private static ISelectManager _selectManager;
         private static GameState _gameState;
         static Program()
         {
@@ -249,7 +252,9 @@ namespace ChessSFML
             _resultsMenuSprite = new Sprite(_resultsMenuTexture.Texture);
             #endregion
 
-            _chess = new LocalChessWithSelected();
+            _chess = new LocalChessEngine();
+            _chess.OnTurnChanged += _chess_OnTurnChanged;
+            _selectManager = new SelectManager(_chess);
         }
 
         static void Main(string[] args)
@@ -268,7 +273,7 @@ namespace ChessSFML
                     }
                     else
                     {
-                        _textResult.DisplayedString = (_chess.Winner == ChessLib.Color.White ? "Белый" : "Чёрный") + " цвет победил.";
+                        _textResult.DisplayedString = (_chess.Winner == ChessLib.Data.Color.White ? "Белый" : "Чёрный") + " цвет победил.";
                     }
                     var gb = _textResult.GetGlobalBounds();
                     _textResult.Origin = new Vector2f(gb.Width / 2f, gb.Height / 2f);
@@ -292,7 +297,7 @@ namespace ChessSFML
                                 _skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)].Position = new Vector2f(_CELL_LENGTH * Figure.Position.X + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * Figure.Position.Y + _CELL_LENGTH / 2);
                                 _window.Draw(_skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)]);
                             }
-                            foreach (var position in _chess.MovesForSelected)
+                            foreach (var position in _selectManager.MovesForSelected)
                             {
                                 _canMuveTo.Position = new Vector2f(position.X * _CELL_LENGTH + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * position.Y + _CELL_LENGTH / 2);
                                 _window.Draw(_canMuveTo);
@@ -347,11 +352,7 @@ namespace ChessSFML
                             }
                             else
                             {
-                                if (new[] { "\r", "\t" }.Contains(e.Unicode))
-                                {
-                                    return;
-                                }
-                                SelectedText.DisplayedString += e.Unicode;
+                                SelectedText.DisplayedString += string.Concat(e.Unicode.Where(x => char.IsLetterOrDigit(x)));
                             }
                         }
                     }
@@ -366,11 +367,7 @@ namespace ChessSFML
                             }
                             else
                             {
-                                if (new[] {"\r", "\t"}.Contains(e.Unicode))
-                                {
-                                    return;
-                                }
-                                SelectedText.DisplayedString += e.Unicode;
+                                SelectedText.DisplayedString += string.Concat(e.Unicode.Where(x => char.IsLetterOrDigit(x)));
                             }
                         }
                     }
@@ -418,11 +415,14 @@ namespace ChessSFML
                     {
                         if (_buttonLocalMatch.GetGlobalBounds().Contains(e.X, e.Y))
                         {
-                            if (_chess is HttpChessWithSelect select)
+                            if (_chess is IDisposable disposable)
                             {
-                                select.Dispose();
+                                disposable?.Dispose();
                             }
-                            _chess = new LocalChessWithSelected();
+                            _chess.OnTurnChanged -= _chess_OnTurnChanged;
+                            _chess = new LocalChessEngine();
+                            _chess.OnTurnChanged += _chess_OnTurnChanged;
+                            _selectManager = new SelectManager(_chess);
                             _gameState = GameState.InGame;
                         }
                         else if (_buttonOnlineMatch.GetGlobalBounds().Contains(e.X, e.Y))
@@ -440,29 +440,29 @@ namespace ChessSFML
                     {
                         if (e.Button == Mouse.Button.Right)
                         {
-                            _chess.Selected = null;
+                            _selectManager.Selected = null;
                         }
                         else if (e.Button == Mouse.Button.Left)
                         {
-                            if (!_chess.Selected.HasValue)
+                            if (!_selectManager.Selected.HasValue)
                             {
-                                _chess.Selected = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
+                                _selectManager.Selected = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
                             }
                             else
                             {
                                 var pos = new ChessPosition(e.X / _CELL_LENGTH, 7 - e.Y / _CELL_LENGTH);
-                                if (_chess.Selected.Value == pos)
+                                if (_selectManager.Selected.Value == pos)
                                 {
-                                    _chess.Selected = null;
+                                    _selectManager.Selected = null;
                                 }
                                 else if (_chess.GetFigure(pos) is not null && _chess.GetFigure(pos).Color == _chess.Turn)
                                 {
-                                    _chess.Selected = pos;
+                                    _selectManager.Selected = pos;
                                 }
                                 else
                                 {
-                                    _chess.Move(_chess.Selected.Value, pos);
-                                    _chess.Selected = null;
+                                    _chess.Move(_selectManager.Selected.Value, pos);
+                                    _selectManager.Selected = null;
                                 }
                             }
                         }
@@ -489,11 +489,11 @@ namespace ChessSFML
                     {
                         if (_buttonCreate.GetGlobalBounds().Contains(e.X, e.Y))
                         {
-                            if (_chess is HttpChessWithSelect select)
+                            if (_chess is IDisposable disposable)
                             {
-                                select.Dispose();
+                                disposable?.Dispose();
                             }
-                            var chess = new HttpChessWithSelect(_textName.DisplayedString, "https://chess.mrexpen.ru:4432");
+                            var chess = new HttpChessEngine(_textName.DisplayedString, "https://chess.mrexpen.ru:4432");
 
                             var MatchId = chess.CreateMatch(_textWhiteName.DisplayedString, _textBlackName.DisplayedString);
                             //TODO: checks
@@ -515,16 +515,19 @@ namespace ChessSFML
                     {
                         if (_buttonJoin.GetGlobalBounds().Contains(e.X, e.Y))
                         {
-                            if (_chess is HttpChessWithSelect select)
+                            if (_chess is IDisposable disposable)
                             {
-                                select.Dispose();
+                                disposable?.Dispose();
                             }
-                            var chess = new HttpChessWithSelect(_textName.DisplayedString, "https://chess.mrexpen.ru:4432");
+                            var chess = new HttpChessEngine(_textName.DisplayedString, "https://chess.mrexpen.ru:4432");
 
                             //TODO: checks
                             chess.JoinMatch(int.Parse(_textMatchId.DisplayedString));
 
+                            _chess.OnTurnChanged -= _chess_OnTurnChanged;
                             _chess = chess;
+                            _chess.OnTurnChanged += _chess_OnTurnChanged;
+                            _selectManager = new SelectManager(_chess);
                             _gameState = GameState.InGame;
                         }
                         else if (_textName.GetGlobalBounds().Contains(e.X, e.Y))
@@ -538,6 +541,11 @@ namespace ChessSFML
                     }
                     break;
             }
+        }
+
+        private static void _chess_OnTurnChanged(object sender, TurnChangedEventArgs e)
+        {
+
         }
     }
 }

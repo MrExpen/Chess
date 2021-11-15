@@ -1,11 +1,6 @@
 ﻿using ChessLib.Figures;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ChessLib
+namespace ChessLib.Data
 {
     public class ChessMove
     {

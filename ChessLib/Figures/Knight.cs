@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ChessLib.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,8 +14,6 @@ namespace ChessLib.Figures
         }
 
         public override EnumFigure EnumFigure => EnumFigure.Knight;
-
-        public override char Char => Color == Color.White ? 'N' : 'n';
 
         public override List<ChessPosition> GetMovePositions(Board board)
         {
@@ -31,9 +30,9 @@ namespace ChessLib.Figures
                 Position + new ChessPosition(2, -1),
                 Position + new ChessPosition(-2, 1),
                 Position + new ChessPosition(-2, -1),
-            }.Where(x => x.IsOnBoard));
+            }.Where(x => x.IsOnBoard && (board.Figures[x.X, x.Y]?.Color != Color || board.Figures[x.X, x.Y] is null)));
 
-            return RemoveSelfEat(chessPositions, board);
+            return chessPositions;
         }
     }
 }
