@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System;
 using Newtonsoft.Json;
 using ChessLib.Http.Responses;
+using ChessLib.Engines;
+using ChessLib.Data;
 
 namespace ChessHttpServer.Controllers
 {
