@@ -583,8 +583,8 @@ namespace ChessSFML
                     break;
 
                 case GameState.InChoice:
-                    int posx = (int)(e.X - _pawnChoiceMenuSprite.Position.X + _pawnChoiceMenuSprite.Origin.X) / _CELL_LENGTH;
-                    int posy = (int)(e.Y - _pawnChoiceMenuSprite.Position.Y + _pawnChoiceMenuSprite.Origin.Y) / _CELL_LENGTH;
+                    int posx = (int)(e.X - _pawnChoiceMenuSprite.Position.X + _pawnChoiceMenuSprite.Origin.X + 0.5f * _CELL_LENGTH) / _CELL_LENGTH;
+                    int posy = (int)(e.Y - _pawnChoiceMenuSprite.Position.Y + _pawnChoiceMenuSprite.Origin.Y + 0.5f * _CELL_LENGTH) / _CELL_LENGTH;
                     if (posy == 1)
                     {
                         switch (posx)
