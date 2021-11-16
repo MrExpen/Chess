@@ -8,6 +8,7 @@ using ChessLib.Engines;
 using ChessLib.Utils;
 using ChessLib.Data;
 using SFML.Audio;
+using ChessLib.Figures;
 
 namespace ChessSFML
 {
@@ -31,6 +32,7 @@ namespace ChessSFML
         private static IChessEngine _chess;
         private static ISelectManager _selectManager;
         private static GameState _gameState;
+        private static EnumFigure _choice;
 
         static Program()
         {
@@ -107,9 +109,18 @@ namespace ChessSFML
                 FillColor = SFML.Graphics.Color.Black
             };
             SFML.Graphics.Color ClearColor = SFML.Graphics.Color.White;
-            SFML.Graphics.Color ButtonColor = new SFML.Graphics.Color(200, 200, 200);
+            SFML.Graphics.Color _buttonColor = new SFML.Graphics.Color(200, 200, 200);
             Vector2f ButtonSize = new Vector2f(_window.Size.X * 0.7f, _window.Size.Y * 0.1f);
             int Margin = 20;
+            #endregion
+
+            #region PawnChoice
+            _pawnChoiceMenuTexture = new RenderTexture(_CELL_LENGTH * 5, _CELL_LENGTH * 2);
+            _pawnChoiceMenuSprite = new Sprite(_pawnChoiceMenuTexture.Texture)
+            {
+                Origin = (Vector2f)_pawnChoiceMenuTexture.Size / 2f,
+                Position = (Vector2f)_window.Size / 2f
+            };
             #endregion
 
             #region Text
@@ -134,21 +145,21 @@ namespace ChessSFML
 
             _buttonLocalMatch = new RectangleShape(ButtonSize)
             {
-                FillColor = ButtonColor
+                FillColor = _buttonColor
             };
             _buttonLocalMatch.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
             _buttonLocalMatch.Position = ((Vector2f)_window.Size / 2f) - new Vector2f(0, ButtonSize.Y + Margin);
 
             _buttonOnlineMatch = new RectangleShape(ButtonSize)
             {
-                FillColor = ButtonColor
+                FillColor = _buttonColor
             };
             _buttonOnlineMatch.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
             _buttonOnlineMatch.Position = (Vector2f)_window.Size / 2f;
 
             _buttonExit = new RectangleShape(ButtonSize)
             {
-                FillColor = ButtonColor
+                FillColor = _buttonColor
             };
             _buttonExit.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
             _buttonExit.Position = ((Vector2f)_window.Size / 2f) + new Vector2f(0, ButtonSize.Y + Margin);
@@ -183,14 +194,14 @@ namespace ChessSFML
 
             _buttonJoinMenu = new RectangleShape(ButtonSize)
             {
-                FillColor = ButtonColor
+                FillColor = _buttonColor
             };
             _buttonJoinMenu.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
             _buttonJoinMenu.Position = (Vector2f)_window.Size / 2f - new Vector2f(0, (ButtonSize.Y + Margin) / 2f);
 
             _buttonCreateMenu = new RectangleShape(ButtonSize)
             {
-                FillColor = ButtonColor
+                FillColor = _buttonColor
             };
             _buttonCreateMenu.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
             _buttonCreateMenu.Position = (Vector2f)_window.Size / 2f + new Vector2f(0, (ButtonSize.Y + Margin) / 2f);
@@ -224,7 +235,7 @@ namespace ChessSFML
 
             _buttonJoin = new RectangleShape(ButtonSize)
             {
-                FillColor = ButtonColor
+                FillColor = _buttonColor
             };
             _buttonJoin.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
             _buttonJoin.Position = (Vector2f)_window.Size / 2f + new Vector2f(0, ButtonSize.Y + Margin);
@@ -252,7 +263,7 @@ namespace ChessSFML
 
             _buttonCreate = new RectangleShape(ButtonSize)
             {
-                FillColor = ButtonColor
+                FillColor = _buttonColor
             };
             _buttonCreate.Origin = new Vector2f(ButtonSize.X / 2f, ButtonSize.Y / 2f);
             _buttonCreate.Position = (Vector2f)_window.Size / 2f + new Vector2f(0, ButtonSize.Y + Margin);
@@ -282,6 +293,7 @@ namespace ChessSFML
             #endregion
 
             #region ChessInit
+            _choice = EnumFigure.None;
             _gameState = GameState.InPause;
             _chess = new LocalChessEngine();
             _chess.OnTurnChanged += _chess_OnTurnChanged;
@@ -493,7 +505,7 @@ namespace ChessSFML
                                 }
                                 else
                                 {
-                                    _chess.Move(_selectManager.Selected.Value, pos);
+                                    _chess.Move(_selectManager.Selected.Value, pos, Choice);
                                     _selectManager.Selected = null;
                                 }
                             }
@@ -569,6 +581,29 @@ namespace ChessSFML
                         }
                     }
                     break;
+
+                case GameState.InChoice:
+                    int posx = (int)(e.X - _pawnChoiceMenuSprite.Position.X + _pawnChoiceMenuSprite.Origin.X) / _CELL_LENGTH;
+                    int posy = (int)(e.Y - _pawnChoiceMenuSprite.Position.Y + _pawnChoiceMenuSprite.Origin.Y) / _CELL_LENGTH;
+                    if (posy == 1)
+                    {
+                        switch (posx)
+                        {
+                            case 1:
+                                _choice = EnumFigure.Queen;
+                                break;
+                            case 2:
+                                _choice = EnumFigure.Rook;
+                                break;
+                            case 3:
+                                _choice = EnumFigure.Bishop;
+                                break;
+                            case 4:
+                                _choice = EnumFigure.Knight;
+                                break;
+                        }
+                    }
+                    break;
             }
         }
 
@@ -598,6 +633,55 @@ namespace ChessSFML
                 _sound.SoundBuffer = _turnSound;
             }
             _sound.Play();
+        }
+
+        private static EnumFigure Choice(ChessLib.Data.Color color)
+        {
+            _gameState = GameState.InChoice;
+            while (_window.IsOpen)
+            {
+                _window.DispatchEvents();
+
+                if (_choice != EnumFigure.None)
+                {
+                    var result = _choice;
+                    _choice = EnumFigure.None;
+                    _gameState = GameState.InGame;
+                    return result;
+                }
+
+                _window.Draw(_chessBoardSprite);
+                foreach (var Figure in _chess.Figures)
+                {
+                    _skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)].Position = new Vector2f(_CELL_LENGTH * Figure.Position.X + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * Figure.Position.Y + _CELL_LENGTH / 2);
+                    _window.Draw(_skinProvider.Sprites[(Figure.EnumFigure, Figure.Color)]);
+                }
+                foreach (var position in _selectManager.MovesForSelected)
+                {
+                    _canMuveTo.Position = new Vector2f(position.X * _CELL_LENGTH + _CELL_LENGTH / 2, _CELL_LENGTH * 7 - _CELL_LENGTH * position.Y + _CELL_LENGTH / 2);
+                    _window.Draw(_canMuveTo);
+                }
+
+                _pawnChoiceMenuTexture.Clear(new SFML.Graphics.Color(200, 200, 200, 200));
+
+                _skinProvider.Sprites[(EnumFigure.Queen, color)].Position = new Vector2f(_CELL_LENGTH * 1, _CELL_LENGTH * 1);
+                _skinProvider.Sprites[(EnumFigure.Rook, color)].Position = new Vector2f(_CELL_LENGTH * 2, _CELL_LENGTH * 1);
+                _skinProvider.Sprites[(EnumFigure.Bishop, color)].Position = new Vector2f(_CELL_LENGTH * 3, _CELL_LENGTH * 1);
+                _skinProvider.Sprites[(EnumFigure.Knight, color)].Position = new Vector2f(_CELL_LENGTH * 4, _CELL_LENGTH * 1);
+
+                _pawnChoiceMenuTexture.Draw(_skinProvider.Sprites[(EnumFigure.Queen, color)]);
+                _pawnChoiceMenuTexture.Draw(_skinProvider.Sprites[(EnumFigure.Rook, color)]);
+                _pawnChoiceMenuTexture.Draw(_skinProvider.Sprites[(EnumFigure.Bishop, color)]);
+                _pawnChoiceMenuTexture.Draw(_skinProvider.Sprites[(EnumFigure.Knight, color)]);
+
+                _pawnChoiceMenuTexture.Display();
+
+                _window.Draw(_pawnChoiceMenuSprite);
+
+                _window.Display();
+            }
+            _window.Close();
+            throw new Exception();
         }
     }
 }
