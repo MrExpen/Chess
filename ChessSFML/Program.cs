@@ -21,18 +21,20 @@ namespace ChessSFML
         private static readonly Sound _sound;
         private static readonly Sprite _chessBoardSprite;
         private static readonly RectangleShape _buttonExit, _buttonLocalMatch, _buttonOnlineMatch, _buttonJoinMenu, _buttonCreateMenu, _buttonJoin, _buttonCreate;
-        private static readonly RenderTexture _pauseMenuTexture, _newOnlineMenuTexture, _createOnlineMenuTexture, _joinOnlineMenuTexture, _resultsMenuTexture;
-        private static readonly Sprite _pauseMenuSprite, _newOnlineMenuSprite, _createOnlineMenuSprite, _joinOnlineMenuSprite, _resultsMenuSprite;
+        private static readonly RenderTexture _pawnChoiceMenuTexture, _pauseMenuTexture, _newOnlineMenuTexture, _createOnlineMenuTexture, _joinOnlineMenuTexture, _resultsMenuTexture;
+        private static readonly Sprite _pawnChoiceMenuSprite, _pauseMenuSprite, _newOnlineMenuSprite, _createOnlineMenuSprite, _joinOnlineMenuSprite, _resultsMenuSprite;
         private static readonly Font _font = new Font(@".\Resouces\Roboto-Bold.ttf");
         private static Text _textName, _textMatchId, _textWhiteName, _textBlackName, _textResult;
         private static readonly string _url = "https://chess.mrexpen.ru:4432";
-        private static Text SelectedText { get; set; }
+        private static Text SelectedText;
         private static SkinProvider _skinProvider;
         private static IChessEngine _chess;
         private static ISelectManager _selectManager;
         private static GameState _gameState;
+
         static Program()
         {
+            #region WindowInit
             _window = new RenderWindow(new VideoMode(800, 800), "Chess by MrExpen", Styles.Close | Styles.Titlebar);
             _window.Closed += (s, e) =>
             {
@@ -46,16 +48,18 @@ namespace ChessSFML
             _window.MouseButtonReleased += _window_MouseButtonReleased;
             _window.KeyPressed += _window_KeyPressed;
             _window.TextEntered += _window_TextEntered;
+            #endregion
 
-            _gameState = GameState.InPause;
-
+            #region Sounds
             _sound = new Sound();
             _hrumSound = new SoundBuffer(@".\Resouces\hrum.ogg");
             _checkSound = new SoundBuffer(@".\Resouces\check.ogg");
             _turnSound = new SoundBuffer(@".\Resouces\turn.ogg");
             _tieSound = new SoundBuffer(@".\Resouces\tie.ogg");
             _matSound = new SoundBuffer(@".\Resouces\mat.ogg");
+            #endregion
 
+            #region Board
             RectangleShape White = new RectangleShape(new Vector2f(_CELL_LENGTH, _CELL_LENGTH))
             {
                 FillColor = new SFML.Graphics.Color(238, 238, 210)
@@ -86,13 +90,18 @@ namespace ChessSFML
                         Black.Position = Position;
                         _chessBoardTexture.Draw(Black);
                     }
-                    
+
                 }
             }
             _chessBoardTexture.Display();
             _chessBoardSprite = new Sprite(_chessBoardTexture.Texture);
-            _skinProvider = new SkinProvider(@".\Resouces\ChessPiecesArray.png");
+            #endregion
 
+            #region Skins
+            _skinProvider = new SkinProvider(@".\Resouces\ChessPiecesArray.png");
+            #endregion
+
+            #region DefaultSettings
             Text text = new Text(string.Empty, _font, 30)
             {
                 FillColor = SFML.Graphics.Color.Black
@@ -101,10 +110,9 @@ namespace ChessSFML
             SFML.Graphics.Color ButtonColor = new SFML.Graphics.Color(200, 200, 200);
             Vector2f ButtonSize = new Vector2f(_window.Size.X * 0.7f, _window.Size.Y * 0.1f);
             int Margin = 20;
+            #endregion
 
-            _pauseMenuTexture = new RenderTexture(_window.Size.X, _window.Size.Y);
-            _pauseMenuTexture.Clear(ClearColor);
-
+            #region Text
             _textName = new Text("Name", _font, 24) { FillColor = SFML.Graphics.Color.Black };
             _textName.Origin = new Vector2f(0, _textName.GetGlobalBounds().Height / 2f);
 
@@ -118,8 +126,11 @@ namespace ChessSFML
             _textBlackName.Origin = new Vector2f(0, _textBlackName.GetGlobalBounds().Height / 2f);
 
             _textResult = new Text(string.Empty, _font, 24) { FillColor = SFML.Graphics.Color.Black, Position = (Vector2f)_window.Size / 2f };
+            #endregion
 
             #region PauseMenu
+            _pauseMenuTexture = new RenderTexture(_window.Size.X, _window.Size.Y);
+            _pauseMenuTexture.Clear(ClearColor);
 
             _buttonLocalMatch = new RectangleShape(ButtonSize)
             {
@@ -270,9 +281,12 @@ namespace ChessSFML
             _resultsMenuSprite = new Sprite(_resultsMenuTexture.Texture);
             #endregion
 
+            #region ChessInit
+            _gameState = GameState.InPause;
             _chess = new LocalChessEngine();
             _chess.OnTurnChanged += _chess_OnTurnChanged;
             _selectManager = new SelectManager(_chess);
+            #endregion
         }
 
         static void Main(string[] args)
